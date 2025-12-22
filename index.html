@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles/format.css">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/text.css">
+    <script src="scripts/game.js" defer></script>
+    <script src="scripts/core-game.js" defer></script>
+    <script src="scripts/main.js" defer></script>
+</head>
+<body class="off-white">
+    <div id="game" class="page">
+        <div>
+            <div class="alert-container" data-alert-container></div>
+            <div class="header">
+                <div>
+                    <img src="resources/Conundrum horizontal.svg" class="conundrum-horizontal-icon">
+                </div>
+                <div>
+                    <a onclick="showPage('info')">
+                        <img src="resources/info-icon.svg" class="icon">
+                    </a>
+                </div>
+                <div>
+                    <a onclick="showPage('stats')">
+                        <img src="resources/stats-icon.svg" class="icon">
+                    </a>
+                </div>
+            </div>
+            <div class="underline"></div>
+            <div class="centered">
+                <div class="text-box-game gap" style="--amount: 1.1em">
+                    Create four groups of four
+                </div>
+            </div>
+            <div class="centered gap" style="--amount: 1.2em">
+                <div class="game-grid">
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+                    <div class="game-button">test</div>
+                </div>
+
+                <div class="overlay-grid">
+                    <div class="game-bar hidden green" data-game-bar="1">
+                        <b>First group of words go here</b>
+                        <br>word, word, word, word
+                    </div>
+                    <div class="game-bar hidden lime" data-game-bar="2">
+                        <b>Second group of words go here</b>
+                        <br>word, word, word, word
+                    </div>
+                    <div class="game-bar hidden lilac" data-game-bar="3">
+                        <b>Third group of words go here</b>
+                        <br>word, word, word, word
+                    </div>
+                    <div class="game-bar hidden orange" data-game-bar="4">
+                        <b>Fourth group of words go here</b>
+                        <br>word, word, word, word
+                    </div>
+                </div>
+            </div>
+            <div class="centered gap" style="--amount: 1.5em">
+                <div class="text-box-game">
+                    Mistakes remainging:
+                    <div class="dot" data-mistake-indicator></div>
+                    <div class="dot" data-mistake-indicator></div>
+                    <div class="dot" data-mistake-indicator></div>
+                    <div class="dot" data-mistake-indicator></div>
+                </div>
+                
+            </div>
+            <div class="centered gap" style="--amount: 1.5em">
+                <button class="button shuffle" onclick="shuffleButtons()" data-shuffle-button>
+                    Shuffle
+                </button>
+                <button class="button deselect disabled" onclick="clearAllSelections()" data-deselect-button>
+                    Deselect all
+                </button>
+                <button class="button submit disabled" onclick="submitSelections()" data-submit-button>
+                    Submit
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="info" class="page active">
+        <div class="text-info-title gap left" style="--amount: 1.5em">
+            How To Play
+        </div>
+        <div class="left">
+            <div class="text-box-info gap left" style="--amount: 1.1em">
+                Identify groups of four items that share <br> a common trait, and tap 'Submit' to check if you're correct.
+            </div>
+        </div>
+        <div class="left">
+            <div class="text-box-info gap left" style="--amount: 1.1em">
+                Complete the groups without making<br> 4 mistakes!
+            </div>
+        </div>
+        <div class="left">
+            <div class="text-box-info heading gap left" style="--amount: 1.1em">
+                Category Examples
+            </div>
+        </div>
+        <div class="left">
+            <div class="text-box-info gap left" style="--amount: .2em">
+                GAA LEVELS: Senior, Junior, Minor, <br> Intermediate<br>BALLY___: Bunion, Money, Brack, Bay
+            </div>
+        </div>
+        <div class="left">
+            <div class="text-box-info gap left" style="--amount: 1.1em">
+                Categories will always be more specific than <br> just '5-LETTER-WORDS', 'NAMES', or 'VERBS'.
+            </div>
+        </div>
+        <div class="left">
+            <div class="text-box-info gap left" style="--amount: 1.1em">
+                Every puzzle has exactly one correct solution. <br> Be cautious-some workds might fit into<br> multiple categories!
+            </div>
+        </div>
+        <div class="left">
+            <div class="text-box-info gap left" style="--amount: 1.1em">
+                Each group is assigned a colour based on <br>what we perceive to be difficult. These will be<br> revealed as you solve. Those assigned to the <br> orange pot are the hardest.
+            </div>
+        </div>
+
+        <div class="box-info-skills gap" style="--amount: 0.8em">
+            <div class="skill-shape green"></div>
+            <div class="skill-shape lime"></div>
+            <div class="skill-shape lilac"></div>
+            <div class="skill-shape orange"></div>
+        </div>
+                <div class="left">
+                    <div class="text-box-info gap" style="--amount: .6em">
+                        Have feedback? &nbsp;<a href="mailto:customerhelp@independent.ie?subject=WordWheel%20Puzzle%20Feedback.">Email
+                            us</a>.
+                    </div>
+                </div>
+        <div class="left info-absolute">
+            <div class="text-box-info gap" style="--amount: -9.1em">
+                Straightforward
+            </div>
+        </div>
+        <div class="left info-absolute">
+            <div class="text-box-info gap" style="--amount: -3.5em">
+                Tricky
+            </div>
+        </div>
+        <div class="centered gap" style="--amount: 0em">
+            <button class="button play" onclick="showPage('game')" data-play-button>
+                Play
+            </button>
+        </div>
+    </div>
+    <div id="stats" class="page">
+        <div>
+            <div class="alert-container" data-stats-alert-container></div>
+            <div class="box right">
+                <a onclick="showPage('game')">
+                    <img src="resources/x-symbol.svg" class="icon">
+                </a>
+            </div>
+            <div class="box center">
+                <div class="gap" style="--amount: 1.5em">
+                    <img src="resources/Conundrum vertical.svg" class="welcome-header">
+                </div>
+            </div>
+            <div class=" centered box gap" style="--amount: 0.6em">
+                <div class="text-box-stats gap centered" style="--amount: 1.1em">
+                    <button class="button stats selected" data-stats-button data-performance onclick="pressStatsButton('performance')">
+                        Performance
+                    </button>
+                    <button class="button stats" data-stats-button data-rankings onclick="pressStatsButton('rankings')">
+                        Rankings
+                    </button>
+                </div>
+            </div>
+            <div class="overlay active" data-stats-overlay data-overlay-performance>
+                <div class="centered">
+                    <div class="text-box-info gap centered" style="--amount: 4em">
+                        You ranked in the top 10% of players today - <br> well done! Your average rank <br> over the last 30 days has been 54%.
+                    </div>
+                </div>
+                <div class="centered">
+                    <div class="text-box-info heading gap centered" style="--amount: 4em">
+                        Your overall statistics
+                    </div>
+                </div>
+                <hr class="hr-stats gap" style="--amount: .5em">
+                <hr class="hr-stats gap" style="--amount:  5em">
+                <hr class="hr-stats gap" style="--amount:  5em">
+            </div>
+            <div class="overlay" data-stats-overlay data-overlay-rankings>
+                <div class="centered">
+                    <div class="text-box-info gap centered" style="--amount: 1.75em">
+                        You rank <b>#342</b>  out of 2.013 players
+                    </div>
+                </div>
+                <div class="centered">
+                    <div class="text-box-info small gap centered" style="--amount: 0.4em">
+                        Based on time taken and mistakes made
+                    </div>
+                </div>
+                <hr class="hr-stats gap" style="--amount: .5em">
+                <hr class="hr-stats gap" style="--amount: 1.8em">
+                <hr class="hr-stats gap" style="--amount: 1.8em">
+                <hr class="hr-stats gap" style="--amount: 1.8em">
+                <hr class="hr-stats gap" style="--amount: 1.8em">
+                <hr class="hr-stats gap" style="--amount: 1.8em">
+                <hr class="hr-stats gap" style="--amount: 1.8em">
+                <div class="centered">
+                    <div class="text-box-info performance heading gap centered" style="--amount: 1em">
+                        Your Performance percentile
+                    </div>
+                </div>
+                <div class="centered">
+                    <div class="text-box-info small gap centered" style="--amount: 0.3em">
+                        Last 20 plays
+                    </div>
+                </div>
+                <div class="left">
+                    <div class="text-box-info graph gap left" style="--amount: 2.2em">
+                        100%
+                    </div>
+                </div>
+                <hr class="hr-stats dotted gap" style="--amount: .1em">
+                <div class="left">
+                    <div class="text-box-info graph gap left" style="--amount: 3.5em">
+                        50%
+                    </div>
+                </div>
+                <hr class="hr-stats dotted gap" style="--amount: .1em">
+                <div class="left">
+                    <div class="text-box-info graph gap left" style="--amount: 3.5em">
+                        0%
+                    </div>
+                </div>
+                <hr class="hr-stats dotted gap" style="--amount: .1em">
+            </div>
+            
+        </div>
+    </div>
+    <div id="welcome" class="page">
+        <div class="centered gap" style="--amount: 2em">
+            <img src="resources/Conundrum vertical.svg" class="welcome-header" alt="">
+        </div>
+        <div class="text-welcome-title gap centered" style="--amount: 10em" data-welcome-header>
+            Welcome Back
+        </div>
+        <div class="text-box-welcome long gap centered" style="--amount: 0.5em" data-welcome-message>
+            Welcome back text that needs to be dynamically changed.
+        </div>
+        <div class="centered gap" style="--amount: 2em">
+            <button class="button welcome" onclick="showPage('game')" data-welcome-button>
+                See Today's Puzzle
+            </button>
+        </div>
+    </div>
+</body>
+</html>

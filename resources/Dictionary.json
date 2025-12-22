@@ -1,0 +1,32 @@
+[
+    {
+        "board": ["Chess", "Checkers", "Monopoly", "Scrabble"],
+        "card": ["Poker", "Blackjack", "Uno", "Go Fish"],
+        "sports": ["FIFA", "NBA 2K", "Rocket League", "Madden"],
+        "rpg": ["Skyrim", "Elden Ring", "Zelda", "Baldur’s Gate"]
+    },
+    {
+        "fruits": ["Apple", "Banana", "Orange", "Grapes"],
+        "vegetables": ["Carrot", "Broccoli", "Spinach", "Potato"],
+        "desserts": ["Cake", "Ice Cream", "Brownie", "Cookie"],
+        "drinks": ["Water", "Coffee", "Tea", "Juice"]
+    },
+    {
+        "mammals": ["Elephant", "Tiger", "Dog", "Horse"],
+        "birds": ["Eagle", "Parrot", "Penguin", "Owl"],
+        "reptiles": ["Snake", "Lizard", "Crocodile", "Turtle"],
+        "sea_life": ["Shark", "Dolphin", "Octopus", "Starfish"]
+    },
+    {
+        "colors": ["Red", "Blue", "Green", "Yellow"],
+        "shapes": ["Circle", "Square", "Triangle", "Rectangle"],
+        "elements": ["Fire", "Water", "Earth", "Air"],
+        "planets": ["Mercury", "Venus", "Earth", "Mars"]
+    },
+    {
+        "vehicles": ["Car", "Bike", "Truck", "Boat"],
+        "instruments": ["Guitar", "Piano", "Drums", "Violin"],
+        "clothes": ["Shirt", "Pants", "Jacket", "Hat"],
+        "jobs": ["Doctor", "Teacher", "Engineer", "Chef"]
+    }
+]
