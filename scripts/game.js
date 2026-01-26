@@ -1,9 +1,9 @@
-let gameHasStarted = false
 let timerStarted = false
 
 let gameState = {
-    currentGame: 0,
+    gameNumber: 0,
     isComplete: false,
+    isWin: false,
     hasOpenedPuzzle: false,
     remainingFailures: 4,
     items: [
@@ -39,26 +39,19 @@ let cumulativeData = []
 const FLIP_ANIMATION_DURATION = 500
 const DANCE_ANIMATION_DURATION = 500
 
-function loadGame() {
-    
-}
-
 function resetGameState() {
     gameState = {
-        currentGame: 0,
+        gameNumber: targetGameNumber,
+        puzzleNumber: targetPuzzleIndex,
         isComplete: false,
+        isWin: false,
         hasOpenedPuzzle: false,
         remainingFailures: 4,
-        items: [],
+        items: getPuzzleItems(targetPuzzleIndex),
         submittedCount: 0 
     }
 
     storeGameStateData()
-}
-
-function openGame() {
-    if (gameHasStarted) return
-    gameHasStarted = true;
 }
 
 function startTimer() {
@@ -151,7 +144,7 @@ function handleKeyPress(e) {
             return
         }
     } else {
-        if (e.key === "Enter" && gameState.currentGame < 2) {
+        if (e.key === "Enter") {
             
         }
     }

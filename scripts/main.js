@@ -1,4 +1,4 @@
-const DATE_OF_FIRST_PUZZLE = new Date(2024, 6, 25)
+const DATE_OF_FIRST_PUZZLE = new Date(2025, 1, 1)
 const ALLOW_MOBILE_SHARE = true; 
 
 const alertContainer = document.querySelector("[data-alert-container]")
@@ -13,18 +13,28 @@ window.dataLayer = window.dataLayer || [];
 const DICTIONARY = "resources/Dictionary.json";
 let puzzles = [];
 
+let targetGameNumber = 0;
+let targetPuzzleIndex = 0;
+
 async function fetchDictionary() {
     const response = await fetch(DICTIONARY);
     puzzles = await response.json();
 
-    // Pick and load a random puzzle for now
-    const puzzleIndex = Math.floor(Math.random() * puzzles.length);
-    loadPuzzleIntoGameState(puzzleIndex);
+    // Calculate the number of days since the first puzzle
+    const today = new Date();
+    const daysSinceFirstPuzzle = Math.floor((today - DATE_OF_FIRST_PUZZLE) / (1000 * 60 * 60 * 24));
+
+    // Use modulo to determine the target game number
+    targetGameNumber = daysSinceFirstPuzzle;
+    targetPuzzleIndex = targetGameNumber % puzzles.length;
+
+    fetchGameState();
+    fetchCumulativeData();
 }
 
 fetchDictionary()
 
-function loadPuzzleIntoGameState(puzzleIndex) {
+function getPuzzleItems(puzzleIndex) {
     const puzzle = puzzles[puzzleIndex];
     if (!puzzle) return;
 
@@ -32,17 +42,11 @@ function loadPuzzleIntoGameState(puzzleIndex) {
 
     for (const category in puzzle) {
         puzzle[category].forEach(text => {
-            items.push({ text, category, submitted: false });
+            items.push({ text, category, submitted: false, completed: false});
         });
     }
 
-    // Reset gameState
-    gameState.currentGame = puzzleIndex;
-    gameState.isComplete = false;
-    gameState.hasOpenedPuzzle = false;
-    gameState.remainingFailures = 4;
-    gameState.items = items;
-    gameState.submittedCount = 0;
+    return items;
 }
 
 function showAlert(message, isWin = false, duration = 1000) {
@@ -121,7 +125,7 @@ function showPage(pageId, oldPage = null) {
 
     }
     else if (pageId === "welcome") {
-        
+        generateWelcomeMessage();
     }
     else if (pageId === "info") {
         
@@ -131,7 +135,7 @@ function showPage(pageId, oldPage = null) {
 }
 
 function startInteraction() {
-    document, addEventListener("keydown", handleKeyPress)
+    document.addEventListener("keydown", handleKeyPress)
 
     canInteract = true
 }
@@ -141,11 +145,40 @@ function stopInteraction() {
 }
 
 function storeGameStateData() {
-    //localStorage.setItem("conundrumGameState", JSON.stringify(gameState))
+    localStorage.setItem("pick-4-game-data", JSON.stringify(gameState))
+
+    var hasCumulativeDataForPuzzle = false
+    cumulativeData.forEach(entry => {
+        if (entry.gameNumber === gameState.gameNumber) {
+            hasCumulativeDataForPuzzle = true
+        }
+    })
+
+    if (hasCumulativeDataForPuzzle == false) {
+        const newCumulativeEntry = {
+            gameNumber: gameState.gameNumber,
+            completed: gameState.isComplete,
+            failuresUsed: 4 - gameState.remainingFailures
+        }
+        cumulativeData.push(newCumulativeEntry)
+    } else {
+        var matchingIndex = -1
+        cumulativeData.forEach((entry, index) => {
+            if (entry.gameNumber === gameState.gameNumber) {
+                matchingIndex = index
+            }
+        })
+
+        if (matchingIndex != -1) {
+            cumulativeData[matchingIndex].completed = gameState.isComplete
+            cumulativeData[matchingIndex].failuresUsed = 4 - gameState.remainingFailures
+        }
+    }
+    storeCumulativeData()
 }
 
 function storeCumulativeData() {
-    //localStorage.setItem("conundrumCumulativeData", JSON.stringify(cumulativeData))
+    localStorage.setItem("pick-4-cumulative-data", JSON.stringify(cumulativeData))
 }
 
 function pressStatsButton(buttonId) {
@@ -167,25 +200,23 @@ function pressStatsButton(buttonId) {
 }
 
 function fetchGameState() {
-    const localStateJSON = localStorage.getItem("conundrumGameState")
+    const localStateJSON = localStorage.getItem("pick-4-game-data")
     let localGameState = null
     if (localStateJSON != null) {
         localGameState = JSON.parse(localStateJSON)
 
-        if (localGameState.gameNumber === (targetGameNumber + 1)) {
+        if (localGameState.gameNumber == targetGameNumber) {
             gameState = localGameState
         } else {
             console.log("Game state was reset since puzzle does not match: " + localGameState.gameNumber + " & " + targetGameNumber)
             resetGameState()
         }
     } else {
-        console.log("Game state was reset since localStorage did not contain 'conundrumGameState'")
+        console.log("Game state was reset since localStorage did not contain 'pick-4-game-data'")
         resetGameState()
     }
 
-    updateCumulativeData()
-
-    if (gameState.hasOpenedPuzzle === true || gameState.games[gameState.currentGame].wasStarted === true) {
+    if (gameState.hasOpenedPuzzle === true) {
         showPage("welcome")
     } else {
         showPage('info')
@@ -193,7 +224,7 @@ function fetchGameState() {
 }
 
 function fetchCumulativeData() {
-    const localStoreJSON = localStorage.getItem("conundrumCumulativeData")
+    const localStoreJSON = localStorage.getItem("pick-4-cumulative-data")
     if (localStoreJSON != null) {
         console.log("Cumulative Data was Found: " + localStoreJSON)
         cumulativeData = JSON.parse(localStoreJSON)
@@ -210,7 +241,13 @@ function resetCumulativeData() {
 }
 
 function generateWelcomeMessage() {
-    
+    let welcomeMessageElement = document.querySelector('[data-welcome-message]')
+
+    if (gameState.isComplete) {
+        welcomeMessageElement.textContent = "Tomorrow is another day, \nand another puzzle. See you then."
+    } else {
+        welcomeMessageElement.innerHTML = "So far today, you have " + gameState.submittedCount + " successful <br> groups of words linked. <br>How far can you get by midnight?"
+    }
 }
 
 function updateInfoPage() {

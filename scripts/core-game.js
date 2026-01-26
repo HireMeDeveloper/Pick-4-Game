@@ -6,6 +6,9 @@ const gameBars = document.querySelectorAll('[data-game-bar]');
 const mistakeIndicators = document.querySelectorAll('[data-mistake-indicator]');
 
 function startupGameLogic() {
+    gameState.hasOpenedPuzzle = true
+    storeGameStateData()
+
     // Setup event listeners for game buttons
     document.querySelectorAll('.game-button').forEach(button => {
         button.addEventListener('click', () => {
@@ -23,7 +26,17 @@ function startupGameLogic() {
         });
     });
 
+    gameState.items.forEach(item => {
+        item.submitted = false;
+    });
+
     populateButtons();
+    updateRemainingFailuresDisplay();
+    initializeSubmittedGroups();
+
+    if (gameState.isComplete) {
+        disableAllGameButtons();
+    }
 }
 
 function updateButtons() {
@@ -123,6 +136,37 @@ function submitSelections() {
     }
 }
 
+function initializeSubmittedGroups() {
+    // Group completed items by category
+    const completedGroups = {};
+    gameState.items.forEach(item => {
+        if (item.completed) {
+            if (!completedGroups[item.category]) {
+                completedGroups[item.category] = [];
+            }
+            completedGroups[item.category].push(item);
+        }
+    });
+
+    // Get all game bars in order
+    const bars = Array.from(gameBars);
+
+    // Iterate over each group and update completed buttons
+    Object.values(completedGroups).forEach((group, index) => {
+        if (group.length === 4) {
+            // Find buttons corresponding to the completed items
+            const completedButtons = group.map(item =>
+                Array.from(document.querySelectorAll('.game-button')).find(btn => btn.textContent === item.text)
+            );
+
+            // Call updateSubmittedButtons for the group
+            updateSubmittedButtons(completedButtons, group);
+        }
+    });
+
+    storeGameStateData();
+}
+
 // Handles incorrect selections: shake buttons, clear selection, then update buttons
 function handleIncorrectSelection(selectedButtons) {
     let finished = 0;
@@ -141,11 +185,9 @@ function handleIncorrectSelection(selectedButtons) {
     });
 
     gameState.remainingFailures--;
-    for (let i = 0; i < mistakeIndicators.length; i++) {
-        if (i >= gameState.remainingFailures) {
-            mistakeIndicators[i].classList.add("hidden");
-        }
-    }
+    storeGameStateData();
+
+    updateRemainingFailuresDisplay();
 
     if (gameState.remainingFailures === 0) {
         // Game over logic here
@@ -153,15 +195,17 @@ function handleIncorrectSelection(selectedButtons) {
     }
 }
 
+function updateRemainingFailuresDisplay() {
+    for (let i = 0; i < mistakeIndicators.length; i++) {
+        if (i >= gameState.remainingFailures) {
+            mistakeIndicators[i].classList.add("hidden");
+        }
+    }
+ }
+
 function EndGame(isWin) {
     // Disable all buttons
-    for (let button of document.querySelectorAll('.game-button')) {
-        button.classList.add('submitted');
-    }
-
-    clearButton.classList.add('disabled');
-    submitButton.classList.add('disabled');
-    shuffleButton.classList.add('disabled');
+    disableAllGameButtons();
 
     if (isWin) {
         // Handle win logic
@@ -170,10 +214,46 @@ function EndGame(isWin) {
         // Handle loss logic
         showAlert("Game Over!");
     }
+
+    gameState.isComplete = true;
+    gameState.isWin = isWin;
+    storeGameStateData();
 }
+
+function disableAllGameButtons() {
+    for (let button of document.querySelectorAll('.game-button')) {
+        button.classList.add('submitted');
+    }
+
+    clearButton.classList.add('disabled');
+    submitButton.classList.add('disabled');
+    shuffleButton.classList.add('disabled');
+ }
 
 // Handles correct selections: move buttons to row, mark submitted, show bar, shuffle remaining
 function handleCorrectSelection(selectedButtons, selectedItems) {
+    updateSubmittedButtons(selectedButtons, selectedItems);
+    storeGameStateData();
+
+    // Mark items as completed
+    selectedItems.forEach(item => {
+        item.completed = true;
+    });
+
+    gameState.submittedCount++;
+    storeGameStateData();
+
+    if (gameState.submittedCount >= gameState.items.length / 4) {
+        // All items submitted, player wins
+        EndGame(true);
+        return;
+    }
+
+    // Shuffle remaining unsubmitted items into empty buttons
+    shuffleButtons();
+}
+
+function updateSubmittedButtons(selectedButtons, selectedItems) {
     // Get next hidden bar
     const bar = getNextHiddenGameBar();
     if (!bar) return;
@@ -200,8 +280,10 @@ function handleCorrectSelection(selectedButtons, selectedItems) {
         originalBtn.dataset.category = tempCategory;
         originalBtn.classList.remove('selected');
 
-        // Mark submitted 
+        // Mark completed
         item.submitted = true;
+        item.completed = true;
+        
         targetBtn.classList.add('submitted');
 
         // Clear original button
@@ -213,11 +295,6 @@ function handleCorrectSelection(selectedButtons, selectedItems) {
     const words = selectedItems.map(item => item.text);
     bar.innerHTML = `<b>${category.toUpperCase()}</b><br>${words.join(', ')}`;
     bar.classList.remove('hidden');
-
-    gameState.submittedCount++;
-
-    // Shuffle remaining unsubmitted items into empty buttons
-    shuffleButtons();
 }
 
 
@@ -230,7 +307,7 @@ function shuffleButtons() {
         .map(btn => gameState.items.find(item => item.text === btn.textContent));
 
     // Step 2: get all unsubmitted items
-    const remainingItems = gameState.items.filter(item => !item.submitted);
+    const remainingItems = gameState.items.filter(item => !item.completed);
 
     // Step 3: shuffle remaining items
     const shuffledItems = shuffleArray(remainingItems);

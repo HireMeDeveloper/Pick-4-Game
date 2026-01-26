@@ -14,3 +14,7 @@ Notes on Implementation:
 Testing:
 
 Questions:
+    In the stats page, what is the "Orange First" overall statistic?
+    How would you like the colors to work? 
+        Is there a sequence of colors you always want to follow, or do you want each category to be mapped to a color?
+    

@@ -300,7 +300,7 @@ html {
 }
 
 .welcome-header {
-    width: 10em;
+    width: 8em;
 }
 
 .centered {
@@ -397,4 +397,14 @@ html {
 
 .dot.hidden {
     visibility: hidden;
+}
+
+.arrow-icon {
+    position: absolute;
+    width: .55em;
+    margin-left: 2.2em;
+}
+
+.links-header-text-logo {
+    padding-right: 4em;
 }
