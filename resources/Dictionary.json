@@ -1,32 +1,112 @@
 [
     {
-        "gaa_levels": ["Senior", "Junior", "Intermediate", "Minor"],
-        "bally": ["Money", "Bay", "Bunion", "Brack"],
-        "apartment": ["Digs", "Flat", "Pad", "Gaff"],
-        "animal": ["Balloon", "Pack", "Party", "Stuffed"]
+        "gaa_levels": 
+            {
+                "colour": "green", 
+                "words": ["Senior", "Junior", "Intermediate", "Minor"]
+            },
+        "bally": 
+            {
+                "colour": "lime", 
+                "words": ["Money", "Bay", "Bunion", "Brack"]
+            },
+        "apartment": 
+            {
+                "colour": "lilac", 
+                "words": ["Digs", "Flat", "Pad", "Gaff"]
+            },
+        "animal": 
+            {
+                "colour": "orange", 
+                "words": ["Balloon", "Pack", "Party", "Stuffed"]
+            }
     },
     {
-        "pizza_brands": ["Goodfella's", "Domino's", "Apache", "Four Star"],
-        "godfather_movie_cast": ["Michael", "Vito", "Sonny", "Fredo"],
-        "italian_crime_boss_nickname": ["Don", "Godfather", "Kingpin", "Mob Boss"],
-        "nicknames_irish_criminals": ["The General", "The Monk", "The Viper", "Factory John"]
+        "pizza_brands": 
+            {
+                "colour": "green", 
+                "words": ["Goodfella's", "Domino's", "Apache", "Four Star"]
+            },
+        "godfather_movie_cast": 
+            {
+                "colour": "lime", 
+                "words": ["Michael", "Vito", "Sonny", "Fredo"]
+            },
+        "italian_crime_boss_nickname": 
+            {
+                "colour": "lilac", 
+                "words": ["Don", "Godfather", "Kingpin", "Mob Boss"]
+            },
+        "nicknames_irish_criminals": 
+            {
+                "colour": "orange", 
+                "words": ["The General", "The Monk", "The Viper", "Factory John"]
+            }
     },
     {
-        "towns_in_ulster": ["Omagh", "Virginia", "Blacklion", "Crumlin"],
-        "rivers_in-leinster": ["Liffey", "Slaney", "Boyne", "Creggan"],
-        "islands_off_ireland": ["Achill", "Tory", "Rathlin", "Saltee"],
-        "famous_cliffs_in_ireland": ["Moher", "Dune Aengus", "Slieve League", "Croaghaun"]
+        "towns_in_ulster": 
+            {
+                "colour": "green", 
+                "words": ["Omagh", "Virginia", "Blacklion", "Crumlin"]
+            },
+        "rivers_in-leinster": 
+            {
+                "colour": "lime", 
+                "words": ["Liffey", "Slaney", "Boyne", "Creggan"]
+            },
+        "islands_off_ireland": 
+            {
+                "colour": "lilac", 
+                "words": ["Achill", "Tory", "Rathlin", "Saltee"]
+            },
+        "famous_cliffs_in_ireland": 
+            {
+                "colour": "orange", 
+                "words": ["Moher", "Dune Aengus", "Slieve League", "Croaghaun"]
+            }
     },
     {
-        "chess_pieces": ["King", "Queen", "Bishop", "Castle"],
-        "fr_ted_characters": ["Ted", "Jack", "Dougal", "Mrs Doyle"],
-        "shell_fish": ["Pawn", "Lobster", "Oyster", "Mussel"],
-        "alcoholic_drinks": ["Guinness", "Whiskey", "Wine", "Brandy"]
+        "chess_pieces": 
+            {
+                "colour": "green", 
+                "words": ["King", "Queen", "Bishop", "Castle"]
+            },
+        "fr_ted_characters": 
+            {
+                "colour": "lime", 
+                "words": ["Ted", "Jack", "Dougal", "Mrs Doyle"]
+            },
+        "shell_fish": 
+            {
+                "colour": "lilac", 
+                "words": ["Pawn", "Lobster", "Oyster", "Mussel"]
+            },
+        "alcoholic_drinks": 
+            {
+                "colour": "orange", 
+                "words": ["Guinness", "Whiskey", "Wine", "Brandy"]
+            }
     },
     {
-        "us_presidents": ["Donald", "Joe", "Bill", "George"],
-        "irish_taoisigh": ["Jack", "Charlie", "Enda", "Micheál"],
-        "uk_prime_ministers": ["Keir", "Margaret", "Gordon", "John"],
-        "french_presidents": ["Nicolas", "Emmanuel", "Charles", "François"]
+        "us_presidents": 
+            {
+                "colour": "green", 
+                "words": ["Donald", "Joe", "Bill", "George"]
+            },
+        "irish_taoisigh": 
+            {
+                "colour": "lime", 
+                "words": ["Jack", "Charlie", "Enda", "Micheál"]
+            },
+        "uk_prime_ministers": 
+            {
+                "colour": "lilac", 
+                "words": ["Keir", "Margaret", "Gordon", "John"]
+            },
+        "french_presidents": 
+            {
+                "colour": "orange", 
+                "words": ["Nicolas", "Emmanuel", "Charles", "François"]
+            }
     }
 ]

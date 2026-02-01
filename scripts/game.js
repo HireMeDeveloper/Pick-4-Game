@@ -48,7 +48,8 @@ function resetGameState() {
         hasOpenedPuzzle: false,
         remainingFailures: 4,
         items: getPuzzleItems(targetPuzzleIndex),
-        submittedCount: 0 
+        submittedCount: 0,
+        firstColour: null
     }
 
     storeGameStateData()

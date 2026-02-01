@@ -5,7 +5,12 @@ const shuffleButton = document.querySelector('[data-shuffle-button]');
 const gameBars = document.querySelectorAll('[data-game-bar]');
 const mistakeIndicators = document.querySelectorAll('[data-mistake-indicator]');
 
+hasStartedGameLogic = false;
+
 function startupGameLogic() {
+    if (hasStartedGameLogic) return;
+    hasStartedGameLogic = true;
+
     gameState.hasOpenedPuzzle = true
     storeGameStateData()
 
@@ -36,6 +41,7 @@ function startupGameLogic() {
 
     if (gameState.isComplete) {
         disableAllGameButtons();
+        showAnswers();
     }
 }
 
@@ -83,7 +89,9 @@ function shuffleArray(array) {
 }
 
 function allSameCategory(items) {
-    return items.every(item => item.category === items[0].category);
+    console.log(items.length);
+    const firstCategory = items[0].category;
+    return items.every(item => item.category === firstCategory);
 }
 
 function populateButtons() {
@@ -213,11 +221,40 @@ function EndGame(isWin) {
     } else {
         // Handle loss logic
         showAlert("Game Over!");
+        showAnswers();
     }
 
     gameState.isComplete = true;
     gameState.isWin = isWin;
     storeGameStateData();
+}
+
+function showAnswers() {
+    // Handle loss logic
+    // Update header text
+    const headerText = document.querySelector("[data-game-header-info]");
+    headerText.textContent = "Answers";
+
+    // Show remaining categories in hidden bars
+    const remainingCategories = new Set();
+    gameState.items.forEach(item => {
+        if (!item.completed) {
+            remainingCategories.add(item.category);
+        }
+    });
+    const remainingCats = Array.from(remainingCategories);
+    let catIndex = 0;
+    gameBars.forEach(bar => {
+        if (bar.classList.contains('hidden') && catIndex < remainingCats.length) {
+            const cat = remainingCats[catIndex];
+            const catItems = gameState.items.filter(item => item.category === cat && !item.completed);
+            const words = catItems.map(item => item.text);
+            bar.innerHTML = `<b>${cat.toUpperCase()}</b><br>${words.join(', ')}`;
+            bar.classList.add(catItems[0].colour);
+            bar.classList.remove('hidden');
+            catIndex++;
+        }
+    });
 }
 
 function disableAllGameButtons() {
@@ -242,6 +279,11 @@ function handleCorrectSelection(selectedButtons, selectedItems) {
 
     gameState.submittedCount++;
     storeGameStateData();
+
+    if (gameState.submittedCount === 1) {
+        gameState.firstColour = selectedItems[0].colour;
+        storeGameStateData();
+    }
 
     if (gameState.submittedCount >= gameState.items.length / 4) {
         // All items submitted, player wins
@@ -294,6 +336,7 @@ function updateSubmittedButtons(selectedButtons, selectedItems) {
     const category = selectedItems[0].category;
     const words = selectedItems.map(item => item.text);
     bar.innerHTML = `<b>${category.toUpperCase()}</b><br>${words.join(', ')}`;
+    bar.classList.add(selectedItems[0].colour);
     bar.classList.remove('hidden');
 }
 

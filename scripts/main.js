@@ -41,8 +41,8 @@ function getPuzzleItems(puzzleIndex) {
     const items = [];
 
     for (const category in puzzle) {
-        puzzle[category].forEach(text => {
-            items.push({ text, category, submitted: false, completed: false});
+        puzzle[category].words.forEach(text => {
+            items.push({ text, category, colour: puzzle[category].colour, submitted: false, completed: false});
         });
     }
 
@@ -122,7 +122,7 @@ function showPage(pageId, oldPage = null) {
         startupGameLogic();
     }
     else if (pageId === "stats") {
-
+        updateAllStats();
     }
     else if (pageId === "welcome") {
         generateWelcomeMessage();
@@ -158,7 +158,9 @@ function storeGameStateData() {
         const newCumulativeEntry = {
             gameNumber: gameState.gameNumber,
             completed: gameState.isComplete,
-            failuresUsed: 4 - gameState.remainingFailures
+            isWin: gameState.isWin,
+            failuresUsed: 4 - gameState.remainingFailures,
+            firstColour: gameState.firstColour
         }
         cumulativeData.push(newCumulativeEntry)
     } else {
@@ -171,7 +173,9 @@ function storeGameStateData() {
 
         if (matchingIndex != -1) {
             cumulativeData[matchingIndex].completed = gameState.isComplete
+            cumulativeData[matchingIndex].isWin = gameState.isWin
             cumulativeData[matchingIndex].failuresUsed = 4 - gameState.remainingFailures
+            cumulativeData[matchingIndex].firstColour = gameState.firstColour
         }
     }
     storeCumulativeData()
@@ -259,7 +263,54 @@ function processStats() {
 }
 
 function updateAllStats() {
+    if (!cumulativeData || cumulativeData.length === 0) return;
 
+    // Sort by gameNumber
+    let sorted = cumulativeData.sort((a, b) => a.gameNumber - b.gameNumber);
+    let completed = sorted.filter(e => e.completed).length;
+
+    let totalGames = sorted.length;
+    let wins = sorted.filter(e => e.isWin).length;
+    let winPercent = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+
+    // Current Streak
+    let currentStreak = 0;
+    for (let i = sorted.length - 1; i >= 0; i--) {
+        if (sorted[i].isWin) {
+            currentStreak++;
+        } else {
+            break;
+        }
+    }
+
+    // Max Streak
+    let maxStreak = 0;
+    let temp = 0;
+    for (let entry of sorted) {
+        if (entry.isWin) {
+            temp++;
+            if (temp > maxStreak) maxStreak = temp;
+        } else {
+            temp = 0;
+        }
+    }
+
+    // Perfect Puzzles: wins with 0 failures
+    let perfect = sorted.filter(e => e.isWin && e.failuresUsed === 0).length;
+
+    // Orange Firsts: completed with firstColour orange
+    let orangeFirsts = sorted.filter(e => e.completed && e.firstColour === 'orange').length;
+
+    // Update HTML
+    let statsData = document.querySelectorAll('.stats-grid .statistic-data');
+    if (statsData.length >= 6) {
+        statsData[0].textContent = completed;
+        statsData[1].textContent = winPercent + '%';
+        statsData[2].textContent = currentStreak;
+        statsData[3].textContent = maxStreak;
+        statsData[4].textContent = perfect;
+        statsData[5].textContent = orangeFirsts;
+    }
 }
 
 function updateStats(statsGrid, daysPlayed, games, wins, hintsUsed, grade) {

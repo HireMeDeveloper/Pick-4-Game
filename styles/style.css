@@ -180,8 +180,12 @@
     text-align: center;
 }
 
-.statistic.large {
-    grid-column: span 4;
+.statistic.dummy {
+    visibility: hidden;
+}
+
+.statistic.wide {
+    grid-column: span 2;
 }
 
 .statistic-data {
@@ -194,12 +198,13 @@
 }
 
 .stats-grid {
+    position: absolute;
     display: grid;
     justify-content: center;
     align-content: center;
     grid-template-columns: repeat(4, 4em);
-    grid-template-rows: repeat(2, 4.25em);
+    grid-template-rows: repeat(2, 4.5em);
     gap: .5em;
     margin-bottom: 1em;
-    margin-top: -.5em;
+    margin-top: -1.2em;
 }
