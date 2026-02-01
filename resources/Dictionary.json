@@ -32,12 +32,12 @@
                 "colour": "lime", 
                 "words": ["Michael", "Vito", "Sonny", "Fredo"]
             },
-        "italian_crime_boss_nickname": 
+        "italian_crime_boss": 
             {
                 "colour": "lilac", 
                 "words": ["Don", "Godfather", "Kingpin", "Mob Boss"]
             },
-        "nicknames_irish_criminals": 
+        "irish_criminals": 
             {
                 "colour": "orange", 
                 "words": ["The General", "The Monk", "The Viper", "Factory John"]
