@@ -198,14 +198,14 @@ function initializeSubmittedGroups() {
     storeGameStateData();
 }
 
-// Handles incorrect selections: shake buttons, clear selection, then update buttons
+// Handles incorrect selections: shake buttons, keep selection, then update buttons
 function handleIncorrectSelection(selectedButtons) {
     let finished = 0;
     selectedButtons.forEach(btn => {
         btn.classList.add("shake");
         btn.addEventListener("animationend", () => {
             btn.classList.remove("shake");
-            btn.classList.remove("selected");
+            // Keep selections so user can modify
 
             finished++;
             if (finished === selectedButtons.length) {
