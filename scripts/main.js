@@ -134,6 +134,11 @@ function showPage(pageId, oldPage = null) {
     if (oldPage != null) lastPage = oldPage
 }
 
+function continueToGame() {
+    fireEvent("continueGame");
+    showPage('game');
+}
+
 function startInteraction() {
     document.addEventListener("keydown", handleKeyPress)
 

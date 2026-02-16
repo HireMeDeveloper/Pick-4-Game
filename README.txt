@@ -10,9 +10,17 @@ Notes on Implementation:
         There is currently an example output of what the game will read for puzzles. This is a list of all of the puzzles to be used in the game. I can rework it to gather
         the data for any layout that you give me.
     Events:
+        There are a handful of events, as requested, that are sent to the data layer.
+        Each of these events are based around the buttons that players use in the game.
+            pressedShare: this event is fired when a player presses the share button.
+            continueGame: this event is fired when a player presses the continue button from the welcome page.
+        These events fire at the start and end of the puzzle.
+            onGameStart: fires when the player has started in the puzzle
+            onCompletion: fires when the play completes the game
 
 Testing:
 
 Questions:
     In the stats page, do you want the streaks to be for wins, completed games, or just plays?
+    Can we get a mockup for the share button layout on the stats page, as the current design is tight on space.
     

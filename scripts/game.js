@@ -31,7 +31,8 @@ let gameState = {
         { text: "Zelda", category: "rpg", submitted: false },
         { text: "Baldur’s Gate", category: "rpg", submitted: false }
     ],
-    submittedCount: 0 // number of groups already submitted
+    submittedCount: 0, // number of groups already submitted
+    incorrectGuesses: []
 }
 
 let cumulativeData = []
@@ -49,7 +50,8 @@ function resetGameState() {
         remainingFailures: 4,
         items: getPuzzleItems(targetPuzzleIndex),
         submittedCount: 0,
-        firstColour: null
+        firstColour: null,
+        incorrectGuesses: []
     }
 
     storeGameStateData()

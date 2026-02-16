@@ -192,7 +192,7 @@ html {
 }
 
 .shake {
-    animation: shake 250ms ease-in-out;
+    animation: shake 400ms ease-in-out;
 }
 
 .tile.dance {
