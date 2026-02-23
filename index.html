@@ -110,37 +110,42 @@
         </div>
         <div class="left">
             <div class="text-box-info gap left" style="--amount: 0.75em">
-                Identify groups of four items that share <br> a common trait, and tap 'Submit' to check if you're correct.
+                Find four items that share a common link.
             </div>
         </div>
         <div class="left">
             <div class="text-box-info gap left" style="--amount: 0.75em">
-                Complete the groups without making<br> 4 mistakes!
+                Select four and tap 'Submit' to check your answer.
+            </div>
+        </div>
+        <div class="left">
+            <div class="text-box-info gap left" style="--amount: 0.75em">
+                Solve all groups with no more than four mistakes.
             </div>
         </div>
         <div class="left">
             <div class="text-box-info heading gap left" style="--amount: 0.75em">
-                Category Examples
+                Examples
             </div>
         </div>
         <div class="left">
             <div class="text-box-info gap left" style="--amount: .2em">
-                GAA LEVELS: Senior, Junior, Minor, <br> Intermediate<br>BALLY___: Bunion, Money, Brack, Bay
+                GAA LEVELS: Senior, Junior, Minor, Intermediate<br>BALLY: Bunion, Money, Brack, Bay
             </div>
         </div>
         <div class="left">
             <div class="text-box-info gap left" style="--amount: 0.75em">
-                Categories will always be more specific than <br> just '5-LETTER-WORDS', 'NAMES', or 'VERBS'.
+                Categories are specific, not broad labels like <br>'5-LETTER WORDS'.
             </div>
         </div>
         <div class="left">
             <div class="text-box-info gap left" style="--amount: 0.75em">
-                Every puzzle has exactly one correct solution. <br> Be careful, some words might fit into<br> multiple categories!
+                Each puzzle has one unique solution. Some words may fit multiple groups.
             </div>
         </div>
         <div class="left">
             <div class="text-box-info gap left" style="--amount: 0.75em">
-                Each group is assigned a colour based on <br>what we perceive to be difficult. These will be<br> revealed as you solve. Those assigned to the <br> orange pot are the hardest.
+                Groups are colour-coded by difficulty. Orange is hardest.
             </div>
         </div>
 
@@ -178,18 +183,18 @@
     <div id="stats" class="page">
         <div>
             <div class="alert-container" data-stats-alert-container></div>
-            <div class="box right">
+            <div class="box right absolute">
                 <a onclick="showPage('game')">
                     <img src="resources/x-symbol.svg" class="icon">
                 </a>
             </div>
             <div class="box center">
                 <div class="gap" style="--amount: 1.5em">
-                    <img src="resources/Stats_Links-logo.svg" class="welcome-header">
+                    <img src="resources/Stats_Links-logo.svg" class="stats-header">
                 </div>
             </div>
-            <div class=" centered box gap" style="--amount: 0.6em">
-                <div class="text-box-stats gap centered" style="--amount: 1.1em">
+            <div class=" centered box gap" style="--amount: 0.4em">
+                <div class="text-box-stats centered">
                     <button class="button stats selected" data-stats-button data-performance onclick="pressStatsButton('performance')">
                         Performance
                     </button>
@@ -200,12 +205,12 @@
             </div>
             <div class="overlay active" data-stats-overlay data-overlay-performance>
                 <div class="centered">
-                    <div class="text-box-info gap centered" style="--amount: 4em">
+                    <div class="text-box-info gap centered" style="--amount: 3em">
                         You ranked in the top 10% of players today - <br> well done! Your average rank <br> over the last 30 days has been 54%.
                     </div>
                 </div>
                 <div class="centered">
-                    <div class="text-box-info heading gap centered" style="--amount: 4em">
+                    <div class="text-box-info heading gap centered" style="--amount: 3em">
                         Your overall statistics
                     </div>
                 </div>
@@ -238,11 +243,18 @@
                 </div>
                 <hr class="hr-stats gap" style="--amount:  5em">
                 <hr class="hr-stats gap" style="--amount:  5em">
+                <div class="centered gap" style="--amount: 4.06em">
+                    <button class="button stats selected share" onclick="pressShare()">
+                        <img src="resources/share-icon.svg" class="share-icon">
+                        <div>Share</div>
+                        <div></div>
+                    </button>
+                </div>
             </div>
             <div class="overlay" data-stats-overlay data-overlay-rankings>
                 <div class="centered">
-                    <div class="text-box-info gap centered" style="--amount: 1.75em">
-                        You rank <b>#342</b>  out of 2.013 players
+                    <div class="text-box-info gap centered" style="--amount: .5em">
+                        You rank #342 out of 2,103 players
                     </div>
                 </div>
                 <div class="centered">
@@ -251,12 +263,12 @@
                     </div>
                 </div>
                 <hr class="hr-stats gap" style="--amount: .5em">
-                <hr class="hr-stats gap" style="--amount: 1.8em">
-                <hr class="hr-stats gap" style="--amount: 1.8em">
-                <hr class="hr-stats gap" style="--amount: 1.8em">
-                <hr class="hr-stats gap" style="--amount: 1.8em">
-                <hr class="hr-stats gap" style="--amount: 1.8em">
-                <hr class="hr-stats gap" style="--amount: 1.8em">
+                <hr class="hr-stats gap" style="--amount: 1.7em">
+                <hr class="hr-stats gap" style="--amount: 1.7em">
+                <hr class="hr-stats gap" style="--amount: 1.7em">
+                <hr class="hr-stats gap" style="--amount: 1.7em">
+                <hr class="hr-stats gap" style="--amount: 1.7em">
+                <hr class="hr-stats gap" style="--amount: 1.7em">
                 <div class="centered">
                     <div class="text-box-info performance heading gap centered" style="--amount: 1em">
                         Your Performance percentile
@@ -268,23 +280,30 @@
                     </div>
                 </div>
                 <div class="left">
-                    <div class="text-box-info graph gap left" style="--amount: 2.2em">
+                    <div class="text-box-info graph gap left" style="--amount: 1.5em">
                         100%
                     </div>
                 </div>
                 <hr class="hr-stats dotted gap" style="--amount: .1em">
                 <div class="left">
-                    <div class="text-box-info graph gap left" style="--amount: 3.5em">
+                    <div class="text-box-info graph gap left" style="--amount: 3.0em">
                         50%
                     </div>
                 </div>
                 <hr class="hr-stats dotted gap" style="--amount: .1em">
                 <div class="left">
-                    <div class="text-box-info graph gap left" style="--amount: 3.5em">
+                    <div class="text-box-info graph gap left" style="--amount: 3.0em">
                         0%
                     </div>
                 </div>
                 <hr class="hr-stats dotted gap" style="--amount: .1em">
+                <div class="centered gap" style="--amount: 0.5em">
+                    <button class="button stats selected share" onclick="pressShare()">
+                        <img src="resources/share-icon.svg" class="share-icon">
+                        <div>Share</div>
+                        <div></div>
+                    </button>
+                </div>
             </div>
             
         </div>

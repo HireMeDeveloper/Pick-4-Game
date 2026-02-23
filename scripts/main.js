@@ -328,7 +328,7 @@ function pressShare() {
         return;
     }
 
-    let textToCopy = "TEST"
+    let textToCopy = "TEST OUTPUT"
 
     if (navigator.share && detectTouchscreen() && ALLOW_MOBILE_SHARE) {
         navigator.share({

@@ -23,6 +23,10 @@
     font-family: Clairseach;
 }
 
+html {
+    overflow: hidden;
+}
+
 :root {
     --color-background: #BFE6E0;
     --light-grey: #D9D9D9;
@@ -48,6 +52,7 @@ body {
     padding: 0em;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     align-items: center;
 
     position: relative;
@@ -191,6 +196,10 @@ html {
     justify-content: right;
 }
 
+.box.right.absolute {
+    position: absolute;
+}
+
 .shake {
     animation: shake 400ms ease-in-out;
 }
@@ -257,7 +266,7 @@ html {
 
 .alert-container {
     position: fixed;
-    top: 9vh;
+    top: 7.5vh;
     left: 50vw;
     transform: translateX(-50%);
     z-index: 1;
@@ -273,22 +282,14 @@ html {
 .alert {
     border: none;
     pointer-events: none;
-    background-color: var(--win-color);
-    padding: 1em;
-    padding-top: .5em;
-    padding-bottom: .5em;
+    background-color: black;
+    color: white;
+    padding: 0.5em;
     border-radius: .25em;
     opacity: 1;
     transition: opacity 500ms ease-in-out;
     margin-bottom: .55em;
-}
-
-.alert.win {
-    background-color: var(--win-color);
-}
-
-.alert.loss {
-    background-color: var(--answer-color);
+    font-size: 0.9em;
 }
 
 .alert:last-child {
@@ -301,6 +302,10 @@ html {
 
 .welcome-header {
     width: 8em;
+}
+
+.stats-header {
+    width: 5em;
 }
 
 .centered {
@@ -316,6 +321,13 @@ html {
     grid-template-columns: repeat(4, 4.5em);
     grid-template-rows: repeat(4, 4.5em);
     gap: .6em;
+}
+
+.share-icon {
+    width: auto;
+    height: 1.2em;
+    margin-right: .5em;
+    margin-bottom: .2em;
 }
 
 .overlay-grid {
@@ -364,16 +376,16 @@ html {
 }
 
 .game-bar.green {
-    background-color: var(--evergreen-accent);
+    background-color: #009982;
 }
 .game-bar.lilac {
-    background-color: var(--lilac-accent);
+    background-color: #B8A4CF;
 }
 .game-bar.orange {
-    background-color: var(--orange-accent);
+    background-color: #ef806c;
 }
 .game-bar.lime {
-    background-color: var(--lime-accent);
+    background-color: #D2DB5D;
 }
 
 .game-bar.hidden,

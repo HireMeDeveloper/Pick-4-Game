@@ -44,7 +44,7 @@ function startupGameLogic() {
 
     if (gameState.isComplete) {
         disableAllGameButtons();
-        showAnswers();
+        showAnswers(false);
     }
 }
 
@@ -111,7 +111,7 @@ function populateButtons() {
         const item = shuffledItems[index];
 
         if (item) {
-            btn.textContent = item.text;
+            btn.textContent = item.text.trim();
             btn.dataset.category = item.category;
             btn.classList.remove('selected');
         } else {
@@ -137,7 +137,7 @@ function submitSelections() {
 
     // Map selected buttons to gameState items
     const selectedItems = selectedButtons.map(btn =>
-        gameState.items.find(item => item.text === btn.textContent && !item.submitted)
+        gameState.items.find(item => item.text.trim() === btn.textContent.trim() && !item.submitted)
     );
 
     const guess = selectedItems.map(item => item.text).sort();
@@ -153,15 +153,17 @@ function submitSelections() {
         const categoryCounts = {};
         categories.forEach(cat => categoryCounts[cat] = (categoryCounts[cat] || 0) + 1);
         const counts = Object.values(categoryCounts);
+        let message = "";
         if (counts.includes(3) && counts.includes(1)) {
-            showAlert("One away...");
+            message = "One away...";
         } else {
-            showAlert("Better luck next time!");
+            message = "Incorrect";
         }
         // Add to incorrect guesses
         gameState.incorrectGuesses.push(guess);
+        gameState.consecutiveCorrect = 0;
         storeGameStateData();
-        handleIncorrectSelection(selectedButtons);
+        handleIncorrectSelection(selectedButtons, message);
     } else {
         handleCorrectSelection(selectedButtons, selectedItems);
     }
@@ -199,7 +201,7 @@ function initializeSubmittedGroups() {
 }
 
 // Handles incorrect selections: shake buttons, keep selection, then update buttons
-function handleIncorrectSelection(selectedButtons) {
+function handleIncorrectSelection(selectedButtons, message) {
     let finished = 0;
     selectedButtons.forEach(btn => {
         btn.classList.add("shake");
@@ -218,6 +220,8 @@ function handleIncorrectSelection(selectedButtons) {
                     if (gameState.remainingFailures === 0) {
                         // Game over logic here
                         EndGame(false);
+                    } else {
+                        showAlert(message);
                     }
                 }, 200);
             }
@@ -242,10 +246,10 @@ function EndGame(isWin) {
         showAlert("You Win!", true, 5000);
     } else {
         // Handle loss logic
-        showAlert("Game Over!", false, 5000);
+        showAlert("Better luck next time!", false, 5000);
     }
 
-    showAnswers();
+    showAnswers(true);
 
     gameState.isComplete = true;
     gameState.isWin = isWin;
@@ -257,7 +261,7 @@ function EndGame(isWin) {
     setTimeout(() => showPage("stats"), 5000);
 }
 
-function showAnswers() {
+function showAnswers(staggered = false) {
     // Update header text
     const headerText = document.querySelector("[data-game-header-info]");
     headerText.textContent = "Answers";
@@ -265,20 +269,37 @@ function showAnswers() {
     // Show all categories in puzzle order (difficulty order)
     const allCats = Object.keys(puzzles[targetPuzzleIndex]);
     let catIndex = 0;
-    gameBars.forEach(bar => {
-        if (catIndex < allCats.length) {
-            const cat = allCats[catIndex];
-            const catItems = gameState.items.filter(item => item.category === cat);
-            const words = catItems.map(item => item.text);
-            bar.innerHTML = `<b>${cat.toUpperCase()}</b><br>${words.join(', ')}`;
-            // Remove existing colour classes
-            const possibleColours = ['green', 'orange', 'blue', 'purple', 'red', 'yellow', 'pink', 'teal', 'brown', 'gray', 'black', 'white'];
-            bar.classList.remove(...possibleColours);
-            bar.classList.add(catItems[0].colour);
-            bar.classList.remove('hidden');
-            catIndex++;
-        }
-    });
+    if (staggered) {
+        gameBars.forEach((bar, index) => {
+            setTimeout(() => {
+                if (catIndex < allCats.length) {
+                    const cat = allCats[catIndex];
+                    const catItems = gameState.items.filter(item => item.category === cat);
+                    const words = catItems.map(item => item.text);
+                    const displayCat = cat.replace(/_/g, ' ').replace(/-/g, ' ').toUpperCase();
+                    bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
+                    
+                    bar.classList.add(catItems[0].colour);
+                    bar.classList.remove('hidden');
+                    catIndex++;
+                }
+            }, index * 350); // Stagger by 350ms
+        });
+    } else {
+        gameBars.forEach(bar => {
+            if (catIndex < allCats.length) {
+                const cat = allCats[catIndex];
+                const catItems = gameState.items.filter(item => item.category === cat);
+                const words = catItems.map(item => item.text);
+                const displayCat = cat.replace(/_/g, ' ').replace(/-/g, ' ').toUpperCase();
+                bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
+                
+                bar.classList.add(catItems[0].colour);
+                bar.classList.remove('hidden');
+                catIndex++;
+            }
+        });
+    }
 }
 
 function disableAllGameButtons() {
@@ -306,9 +327,19 @@ function handleCorrectSelection(selectedButtons, selectedItems) {
         }, i * delayStep);
     });
 
+    gameState.consecutiveCorrect++;
+
     setTimeout(() => {
         updateSubmittedButtons(selectedButtons, selectedItems);
         storeGameStateData();
+
+        if (gameState.consecutiveCorrect === 1) {
+            showAlert("Well done", false, 2000);
+        } else if (gameState.consecutiveCorrect === 2) {
+            showAlert("Amazing", false, 2000);
+        } else if (gameState.consecutiveCorrect === 3) {
+            showAlert("Genius", false, 2000);
+        }
 
         // Mark items as completed
         selectedItems.forEach(item => {
@@ -352,12 +383,12 @@ function updateSubmittedButtons(selectedButtons, selectedItems) {
         const tempCategory = targetBtn.dataset.category;
 
         // Swap content
-        targetBtn.textContent = originalBtn.textContent;
+        targetBtn.textContent = originalBtn.textContent.trim();
         targetBtn.dataset.category = originalBtn.dataset.category;
         targetBtn.classList.remove('selected');
 
         // Swap content back to original button
-        originalBtn.textContent = tempText;
+        originalBtn.textContent = tempText.trim();
         originalBtn.dataset.category = tempCategory;
         originalBtn.classList.remove('selected');
 
@@ -386,7 +417,7 @@ function shuffleButtons() {
     // Step 1: save currently selected items (objects, not just text)
     const selectedItems = buttons
         .filter(btn => btn.classList.contains('selected'))
-        .map(btn => gameState.items.find(item => item.text === btn.textContent));
+        .map(btn => gameState.items.find(item => item.text.trim() === btn.textContent.trim()));
 
     // Step 2: get all unsubmitted items
     const remainingItems = gameState.items.filter(item => !item.completed);
@@ -396,11 +427,11 @@ function shuffleButtons() {
 
     // Step 4: assign shuffled items only to buttons that are not submitted
     buttons.forEach(btn => {
-        const currentItem = gameState.items.find(it => it.text === btn.textContent);
+        const currentItem = gameState.items.find(it => it.text.trim() === btn.textContent.trim());
         if (!currentItem || !currentItem.submitted) {
             const newItem = shuffledItems.shift();
             if (newItem) {
-                btn.textContent = newItem.text;
+                btn.textContent = newItem.text.trim();
                 btn.dataset.category = newItem.category;
             } else {
                 btn.textContent = '';

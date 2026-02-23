@@ -51,7 +51,8 @@ function resetGameState() {
         items: getPuzzleItems(targetPuzzleIndex),
         submittedCount: 0,
         firstColour: null,
-        incorrectGuesses: []
+        incorrectGuesses: [],
+        consecutiveCorrect: 0
     }
 
     storeGameStateData()

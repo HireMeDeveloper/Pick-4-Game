@@ -123,6 +123,10 @@
     color: white;
 }
 
+.button.stats.selected.share {
+    width: 20em;
+}
+
 .overlay {
     visibility: hidden;
     position: absolute;
