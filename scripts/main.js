@@ -10,24 +10,57 @@ let canInteract = false;
 
 window.dataLayer = window.dataLayer || [];
 
-const DICTIONARY = "resources/Dictionary.json";
+const DICTIONARY = "resources/Dictionary.csv";
 let puzzles = [];
 
 let targetGameNumber = 0;
 let targetPuzzleIndex = 0;
 
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i++; // skip next quote
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current);
+    return result;
+}
+
 async function fetchDictionary() {
     const response = await fetch(DICTIONARY);
-    puzzles = await response.json();
-
+    const csvText = await response.text();
+    const lines = csvText.split('\n').filter(line => line.trim());
+    const puzzlesMap = {};
+    lines.slice(1).forEach(line => { // skip header
+        const parts = parseCSVLine(line);
+        const puzzle = parseInt(parts[0]);
+        const colour = parts[2].toLowerCase() === 'purple' ? 'lilac' : parts[2].toLowerCase();
+        const category = parts[3].toLowerCase().replace(/ /g, '_');
+        const words = parts.slice(4, 8).filter(w => w.trim()); // words 4 to 7
+        if (!puzzlesMap[puzzle]) puzzlesMap[puzzle] = {};
+        puzzlesMap[puzzle][category] = { colour, words };
+    });
+    puzzles = Object.values(puzzlesMap);
     // Calculate the number of days since the first puzzle
     const today = new Date();
     const daysSinceFirstPuzzle = Math.floor((today - DATE_OF_FIRST_PUZZLE) / (1000 * 60 * 60 * 24));
-
     // Use modulo to determine the target game number
     targetGameNumber = daysSinceFirstPuzzle;
     targetPuzzleIndex = targetGameNumber % puzzles.length;
-
     fetchGameState();
     fetchCumulativeData();
 }
@@ -328,7 +361,20 @@ function pressShare() {
         return;
     }
 
-    let textToCopy = "TEST OUTPUT"
+    function getEmojiForColor(color) {
+        switch(color) {
+            case 'green': return '🟩';
+            case 'lime': return '🟨';
+            case 'lilac': return '🟪';
+            case 'orange': return '🟧';
+            default: return '⬜';
+        }
+    }
+
+    let textToCopy = "Links\nPuzzle #" + (targetGameNumber + 1) + "\n";
+    for (let attempt of gameState.attempts) {
+        textToCopy += attempt.colors.map(getEmojiForColor).join('') + "\n";
+    }
 
     if (navigator.share && detectTouchscreen() && ALLOW_MOBILE_SHARE) {
         navigator.share({

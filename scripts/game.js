@@ -52,7 +52,8 @@ function resetGameState() {
         submittedCount: 0,
         firstColour: null,
         incorrectGuesses: [],
-        consecutiveCorrect: 0
+        consecutiveCorrect: 0,
+        attempts: []
     }
 
     storeGameStateData()

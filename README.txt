@@ -22,5 +22,4 @@ Testing:
 
 Questions:
     In the stats page, do you want the streaks to be for wins, completed games, or just plays?
-    Can we get a mockup for the share button layout on the stats page, as the current design is tight on space.
     

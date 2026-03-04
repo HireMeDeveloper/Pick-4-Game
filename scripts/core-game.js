@@ -113,6 +113,7 @@ function populateButtons() {
         if (item) {
             btn.textContent = item.text.trim();
             btn.dataset.category = item.category;
+            btn.dataset.itemIndex = gameState.items.indexOf(item);
             btn.classList.remove('selected');
         } else {
             // If there are fewer items than buttons, clear the extra buttons
@@ -184,16 +185,18 @@ function initializeSubmittedGroups() {
     // Get all game bars in order
     const bars = Array.from(gameBars);
 
-    // Iterate over each group and update completed buttons
-    Object.values(completedGroups).forEach((group, index) => {
+    // Iterate over each group and show the bars
+    Object.values(completedGroups).forEach((group, index) => {      
         if (group.length === 4) {
-            // Find buttons corresponding to the completed items
-            const completedButtons = group.map(item =>
-                Array.from(document.querySelectorAll('.game-button')).find(btn => btn.textContent === item.text)
-            );
-
-            // Call updateSubmittedButtons for the group
-            updateSubmittedButtons(completedButtons, group);
+            const bar = bars[index];
+            if (bar) {
+                const words = group.map(item => item.text);
+                const displayCat = group[0].category.replace(/___/g, '___').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
+                bar.classList.remove('green', 'lime', 'lilac', 'orange');
+                bar.classList.add(group[0].colour);
+                bar.classList.remove('hidden');
+            }
         }
     });
 
@@ -215,6 +218,11 @@ function handleIncorrectSelection(selectedButtons, message) {
                 updateButtons();
                 setTimeout(() => {
                     gameState.remainingFailures--;
+                    const selectedItems = selectedButtons.map(button => {
+                        const itemIndex = parseInt(button.dataset.itemIndex);
+                        return gameState.items[itemIndex];
+                    });
+                    gameState.attempts.push({colors: selectedItems.map(item => item.colour)});
                     storeGameStateData();
                     updateRemainingFailuresDisplay();
                     if (gameState.remainingFailures === 0) {
@@ -276,7 +284,7 @@ function showAnswers(staggered = false) {
                     const cat = allCats[catIndex];
                     const catItems = gameState.items.filter(item => item.category === cat);
                     const words = catItems.map(item => item.text);
-                    const displayCat = cat.replace(/_/g, ' ').replace(/-/g, ' ').toUpperCase();
+                    const displayCat = cat.replace(/___/g, '___').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
                     
                     bar.classList.add(catItems[0].colour);
@@ -291,9 +299,10 @@ function showAnswers(staggered = false) {
                 const cat = allCats[catIndex];
                 const catItems = gameState.items.filter(item => item.category === cat);
                 const words = catItems.map(item => item.text);
-                const displayCat = cat.replace(/_/g, ' ').replace(/-/g, ' ').toUpperCase();
+                const displayCat = cat.replace(/___/g, '___').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
                 
+                bar.classList.remove('green', 'lime', 'lilac', 'orange');
                 bar.classList.add(catItems[0].colour);
                 bar.classList.remove('hidden');
                 catIndex++;
@@ -347,6 +356,7 @@ function handleCorrectSelection(selectedButtons, selectedItems) {
         });
 
         gameState.submittedCount++;
+        gameState.attempts.push({colors: selectedItems.map(item => item.colour)});
         storeGameStateData();
 
         if (gameState.submittedCount === 1) {
@@ -380,7 +390,7 @@ function updateSubmittedButtons(selectedButtons, selectedItems) {
         const originalBtn = selectedButtons[i];
 
         const tempText = targetBtn.textContent;
-        const tempCategory = targetBtn.dataset.category;
+        const tempCategory = targetBtn.dataset.category; 
 
         // Swap content
         targetBtn.textContent = originalBtn.textContent.trim();
@@ -406,6 +416,7 @@ function updateSubmittedButtons(selectedButtons, selectedItems) {
     const category = selectedItems[0].category;
     const words = selectedItems.map(item => item.text);
     bar.innerHTML = `<b>${category.toUpperCase()}</b><br>${words.join(', ')}`;
+    bar.classList.remove('green', 'lime', 'lilac', 'orange');
     bar.classList.add(selectedItems[0].colour);
     bar.classList.remove('hidden');
 }
