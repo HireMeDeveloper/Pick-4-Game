@@ -33,6 +33,9 @@ function startupGameLogic() {
         });
     });
 
+    // Setup shuffle button
+    shuffleButton.addEventListener('click', shuffleButtons);
+
     gameState.items.forEach(item => {
         item.submitted = false;
     });
@@ -246,6 +249,10 @@ function updateRemainingFailuresDisplay() {
  }
 
 function EndGame(isWin) {
+    if (typeof completePlayTimeTracking === 'function') {
+        completePlayTimeTracking();
+    }
+
     // Disable all buttons
     disableAllGameButtons();
 
@@ -265,8 +272,8 @@ function EndGame(isWin) {
 
     fireEvent("onCompletion");
 
-    // After 5 seconds, automatically go to stats page
-    setTimeout(() => showPage("stats"), 5000);
+    // After 6 seconds (to allow time for all staggered bars to show), go to stats page
+    setTimeout(() => showPage("stats"), 6000);
 }
 
 function showAnswers(staggered = false) {
@@ -276,24 +283,41 @@ function showAnswers(staggered = false) {
 
     // Show all categories in puzzle order (difficulty order)
     const allCats = Object.keys(puzzles[targetPuzzleIndex]);
-    let catIndex = 0;
+    // Sort categories by their row order (based on min item index)
+    const sortedCats = allCats.sort((a, b) => {
+        const aMinIndex = Math.min(...gameState.items.filter(item => item.category === a).map(item => gameState.items.indexOf(item)));
+        const bMinIndex = Math.min(...gameState.items.filter(item => item.category === b).map(item => gameState.items.indexOf(item)));
+        return aMinIndex - bMinIndex;
+    });
     if (staggered) {
-        gameBars.forEach((bar, index) => {
+        sortedCats.forEach((cat, index) => {
             setTimeout(() => {
-                if (catIndex < allCats.length) {
-                    const cat = allCats[catIndex];
-                    const catItems = gameState.items.filter(item => item.category === cat);
-                    const words = catItems.map(item => item.text);
-                    const displayCat = cat.replace(/___/g, '___').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
-                    
-                    bar.classList.add(catItems[0].colour);
-                    bar.classList.remove('hidden');
-                    catIndex++;
-                }
-            }, index * 350); // Stagger by 350ms
+                const catItems = gameState.items.filter(item => item.category === cat);
+                const buttons = catItems.map(item => {
+                    // Find button by item index
+                    return document.querySelector(`.game-button[data-item-index="${gameState.items.indexOf(item)}"]`);
+                }).filter(btn => btn); // Filter out any nulls
+
+                // Animate the row to position
+                animateRowToPosition(buttons, index);
+
+                // After animation completes (including reset), show the bar
+                setTimeout(() => {
+                    const bar = gameBars[index];
+                    if (bar) {
+                        const words = catItems.map(item => item.text);
+                        const displayCat = cat.replace(/___/g, '___').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
+                        bar.classList.remove('green', 'lime', 'lilac', 'orange');
+                        bar.classList.add(catItems[0].colour);
+                        bar.classList.remove('hidden');
+                        bar.classList.add('emphasize'); // Add emphasize animation
+                    }
+                }, 600); // Wait for full animation + reset
+            }, index * 1500); // 1.5s delay between rows
         });
     } else {
+        let catIndex = 0;
         gameBars.forEach(bar => {
             if (catIndex < allCats.length) {
                 const cat = allCats[catIndex];
@@ -305,6 +329,7 @@ function showAnswers(staggered = false) {
                 bar.classList.remove('green', 'lime', 'lilac', 'orange');
                 bar.classList.add(catItems[0].colour);
                 bar.classList.remove('hidden');
+                bar.classList.add('emphasize');
                 catIndex++;
             }
         });
@@ -419,6 +444,7 @@ function updateSubmittedButtons(selectedButtons, selectedItems) {
     bar.classList.remove('green', 'lime', 'lilac', 'orange');
     bar.classList.add(selectedItems[0].colour);
     bar.classList.remove('hidden');
+    bar.classList.add('emphasize');
 }
 
 
@@ -462,4 +488,93 @@ function shuffleButtons() {
 
     // Step 6: update buttons UI
     updateButtons();
+}
+
+// Animated shuffle for a specific row: Move correct buttons to the target row (without showing bar)
+function animateRowToPosition(correctButtons, targetRowIndex) {
+    if (correctButtons.length !== 4) return; // Ensure exactly 4 buttons
+
+    const grid = document.querySelector('.game-grid');
+    const allButtons = Array.from(grid.children);
+    const rowStartIndex = targetRowIndex * 4;
+    const animationDuration = 500;
+
+    // Get positions before animation
+    const getPosition = (button) => {
+        const gridRect = grid.getBoundingClientRect();
+        const rect = button.getBoundingClientRect();
+        return {
+            x: rect.left - gridRect.left,
+            y: rect.top - gridRect.top
+        };
+    };
+
+    const startPositions = new Map(allButtons.map(button => [button, getPosition(button)]));
+    const slotPositions = allButtons.map(button => startPositions.get(button));
+    const finalOrder = [...allButtons];
+
+    for (let i = 0; i < 4; i++) {
+        const slotIndex = rowStartIndex + i;
+        const desiredButton = correctButtons[i];
+        const currentIndex = finalOrder.indexOf(desiredButton);
+
+        if (currentIndex === -1 || currentIndex === slotIndex) continue;
+
+        [finalOrder[slotIndex], finalOrder[currentIndex]] = [finalOrder[currentIndex], finalOrder[slotIndex]];
+    }
+
+    // Animate each tile directly to its unique final slot position
+    allButtons.forEach((button) => {
+        const fromPos = startPositions.get(button);
+        const toIndex = finalOrder.indexOf(button);
+        const toPos = slotPositions[toIndex];
+
+        if (!fromPos || !toPos) return;
+
+        const deltaX = toPos.x - fromPos.x;
+        const deltaY = toPos.y - fromPos.y;
+
+        if (deltaX === 0 && deltaY === 0) {
+            button.style.transition = '';
+            button.style.transform = '';
+            return;
+        }
+
+        button.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        button.style.transition = 'transform 0.5s ease';
+    });
+
+    for (let i = 0; i < 4; i++) {
+        const incomingButton = correctButtons[i];
+        if (incomingButton) incomingButton.classList.add('submitted');
+    }
+
+    // After animation, commit DOM order so next row uses accurate tile positions
+    setTimeout(() => {
+        finalOrder.forEach(button => grid.appendChild(button));
+
+        allButtons.forEach((button) => {
+            button.style.transition = '';
+            button.style.transform = '';
+        });
+
+        const committedRowButtons = finalOrder.slice(rowStartIndex, rowStartIndex + 4);
+        committedRowButtons.forEach(button => {
+            button.classList.add('submitted');
+            button.classList.remove('selected');
+        });
+    }, animationDuration + 20);
+}
+
+// Animated shuffle for a specific row: Move correct buttons to the target row, then show the bar
+function animateRowShuffle(correctButtons, targetRowIndex) {
+    animateRowToPosition(correctButtons, targetRowIndex);
+
+    // After animation, show the bar
+    setTimeout(() => {
+        const bar = document.querySelector(`[data-game-bar="${targetRowIndex + 1}"]`);
+        if (bar) {
+            bar.classList.remove('hidden');
+        }
+    }, 500);
 }

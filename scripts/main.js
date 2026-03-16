@@ -1,5 +1,12 @@
 const DATE_OF_FIRST_PUZZLE = new Date(2025, 1, 1)
 const ALLOW_MOBILE_SHARE = true; 
+window.DEBUG_MODE = false; // Controls if data is reset on load and the number of allowed failures
+
+if (window.DEBUG_MODE) {
+    localStorage.removeItem('pick-4-game-data');
+    localStorage.removeItem('pick-4-cumulative-data');
+    // Add other keys if needed
+}
 
 const alertContainer = document.querySelector("[data-alert-container]")
 const statsAlertContainer = document.querySelector("[data-stats-alert-container]")
@@ -145,6 +152,10 @@ function showPage(pageId, oldPage = null) {
         pageId = "game"
     }
 
+    if (oldPage === "game" && pageId !== "game" && typeof pausePlayTimeSession === "function") {
+        pausePlayTimeSession()
+    }
+
     const pages = document.querySelectorAll('.page')
     pages.forEach(page => {
         page.classList.remove('active')
@@ -153,6 +164,7 @@ function showPage(pageId, oldPage = null) {
     document.getElementById(pageId).classList.add('active')
     if (pageId === "game") {
         startupGameLogic();
+        if (typeof startPlayTimeSession === "function") startPlayTimeSession()
     }
     else if (pageId === "stats") {
         updateAllStats();
@@ -185,6 +197,11 @@ function stopInteraction() {
 function storeGameStateData() {
     localStorage.setItem("pick-4-game-data", JSON.stringify(gameState))
 
+    let currentPlayTimeSeconds = 0
+    if (typeof getCurrentPlayTimeSeconds === "function") {
+        currentPlayTimeSeconds = getCurrentPlayTimeSeconds()
+    }
+
     var hasCumulativeDataForPuzzle = false
     cumulativeData.forEach(entry => {
         if (entry.gameNumber === gameState.gameNumber) {
@@ -198,7 +215,8 @@ function storeGameStateData() {
             completed: gameState.isComplete,
             isWin: gameState.isWin,
             failuresUsed: 4 - gameState.remainingFailures,
-            firstColour: gameState.firstColour
+            firstColour: gameState.firstColour,
+            playTimeSeconds: currentPlayTimeSeconds
         }
         cumulativeData.push(newCumulativeEntry)
     } else {
@@ -214,6 +232,7 @@ function storeGameStateData() {
             cumulativeData[matchingIndex].isWin = gameState.isWin
             cumulativeData[matchingIndex].failuresUsed = 4 - gameState.remainingFailures
             cumulativeData[matchingIndex].firstColour = gameState.firstColour
+            cumulativeData[matchingIndex].playTimeSeconds = currentPlayTimeSeconds
         }
     }
     storeCumulativeData()
@@ -258,6 +277,8 @@ function fetchGameState() {
         resetGameState()
     }
 
+    if (typeof ensurePlayTimeState === "function") ensurePlayTimeState()
+
     if (gameState.hasOpenedPuzzle === true) {
         showPage("welcome")
     } else {
@@ -300,7 +321,105 @@ function processStats() {
     
 }
 
+async function updatePerformanceFromApi() {
+    if (!window.fakeRankingsApi) return
+
+    const performanceMessageElement = document.querySelector('[data-performance-message]')
+    if (!performanceMessageElement) return
+
+    try {
+        const performanceSummary = await window.fakeRankingsApi.getPerformanceSummary()
+        if (!performanceSummary) return
+
+        performanceMessageElement.innerHTML = "You ranked in the top " + performanceSummary.topPercentToday + "% of players today - <br> well done! Your average rank <br> over the last 30 days has been " + performanceSummary.averageRank30Days + "%."
+    } catch (error) {
+        console.error("Failed to fetch performance summary", error)
+    }
+}
+
+function renderPercentileGraph(percentiles) {
+    const chart = document.querySelector('[data-percentile-chart]')
+    if (!chart) return
+
+    const values = Array.isArray(percentiles) ? percentiles.slice(0, 20) : []
+    if (values.length === 0) {
+        chart.innerHTML = ''
+        return
+    }
+
+    const chartWidth = 320
+    const chartHeight = 120
+    const pointRadius = 1
+    const stepX = values.length > 1 ? chartWidth / (values.length - 1) : chartWidth
+    const guideTopY = chartHeight * 0.24
+    const guideBottomY = chartHeight * 0.906666
+    const plotHeight = guideBottomY - guideTopY
+
+    const points = values.map((value, index) => {
+        const safeValue = Math.max(0, Math.min(100, value))
+        const x = index * stepX
+        const y = guideBottomY - ((safeValue / 100) * plotHeight)
+        return { x, y }
+    })
+
+    const polylinePoints = points.map(point => point.x.toFixed(2) + ',' + point.y.toFixed(2)).join(' ')
+    const circles = points.map(point =>
+        '<circle cx="' + point.x.toFixed(2) + '" cy="' + point.y.toFixed(2) + '" r="' + pointRadius + '" fill="var(--evergreen-accent)"></circle>'
+    ).join('')
+
+    chart.innerHTML =
+        '<polyline points="' + polylinePoints + '" fill="none" stroke="var(--evergreen-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>' +
+        circles
+}
+
+async function updateRankingsFromApi() {
+    if (!window.fakeRankingsApi) return
+
+    const rankMessageElement = document.querySelector('[data-rank-message]')
+    const rankingRows = document.querySelectorAll('.overlay[data-overlay-rankings] .stats-cumulative-entry')
+
+    if (rankingRows.length === 0) return
+
+    try {
+        const playerName = "Jeff"
+        const [topSix, currentRank, last20Plays] = await Promise.all([
+            window.fakeRankingsApi.getTop6(cumulativeData, playerName),
+            window.fakeRankingsApi.getPlayerCurrentRank(cumulativeData, playerName),
+            window.fakeRankingsApi.getPlayerLast20Plays(cumulativeData, playerName)
+        ])
+
+        if (rankMessageElement && currentRank) {
+            rankMessageElement.textContent = "You rank #" + currentRank.rank + " out of " + currentRank.totalPlayers + " players"
+        }
+
+        renderPercentileGraph(last20Plays)
+
+        rankingRows.forEach((row, index) => {
+            const entry = topSix[index]
+            const numberElement = row.querySelector('.stats-cumulative-number')
+            const nameElement = row.querySelector('.stats-cumulative-name')
+            const percentElement = row.querySelector('.stats-cumulative-percent')
+
+            if (!entry) {
+                if (numberElement) numberElement.textContent = "-"
+                if (nameElement) nameElement.textContent = "-"
+                if (percentElement) percentElement.textContent = "-"
+                return
+            }
+
+            if (numberElement) numberElement.textContent = entry.rank
+            if (nameElement) nameElement.textContent = entry.name
+            if (percentElement) percentElement.textContent = entry.percent + "%"
+        })
+    } catch (error) {
+        console.error("Failed to fetch rankings data", error)
+    }
+}
+
 function updateAllStats() {
+    updatePerformanceFromApi()
+    updateRankingsFromApi()
+
     if (!cumulativeData || cumulativeData.length === 0) return;
 
     // Sort by gameNumber
@@ -424,3 +543,9 @@ function pushEventToDataLayer(event) {
 
     console.log(window.dataLayer)
 }
+
+window.addEventListener("beforeunload", () => {
+    if (typeof pausePlayTimeSession === "function") {
+        pausePlayTimeSession()
+    }
+})

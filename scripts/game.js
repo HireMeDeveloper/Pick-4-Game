@@ -1,11 +1,77 @@
 let timerStarted = false
 
+function ensurePlayTimeState() {
+    if (typeof gameState.accumulatedPlayTimeMs !== "number") {
+        gameState.accumulatedPlayTimeMs = (typeof gameState.playTimeMs === "number") ? gameState.playTimeMs : 0
+    }
+
+    if (gameState.activePlayStartedAtMs === undefined) {
+        gameState.activePlayStartedAtMs = (gameState.playSessionStartedAt !== undefined) ? gameState.playSessionStartedAt : null
+    }
+
+    if (gameState.completedAtMs === undefined) gameState.completedAtMs = null
+}
+
+function startPlayTimeSession() {
+    ensurePlayTimeState()
+    if (gameState.isComplete) return
+    if (gameState.activePlayStartedAtMs != null) return
+
+    gameState.activePlayStartedAtMs = Date.now()
+    storeGameStateData()
+}
+
+function pausePlayTimeSession() {
+    ensurePlayTimeState()
+    if (gameState.activePlayStartedAtMs == null) return
+
+    const elapsedMs = Date.now() - gameState.activePlayStartedAtMs
+    if (elapsedMs > 0) {
+        gameState.accumulatedPlayTimeMs += elapsedMs
+    }
+
+    gameState.activePlayStartedAtMs = null
+    storeGameStateData()
+}
+
+function completePlayTimeTracking() {
+    ensurePlayTimeState()
+    if (gameState.completedAtMs != null) return
+
+    const completedAt = Date.now()
+    if (gameState.activePlayStartedAtMs != null) {
+        const elapsedMs = completedAt - gameState.activePlayStartedAtMs
+        if (elapsedMs > 0) {
+            gameState.accumulatedPlayTimeMs += elapsedMs
+        }
+    }
+
+    gameState.activePlayStartedAtMs = null
+    gameState.completedAtMs = completedAt
+    storeGameStateData()
+}
+
+function getCurrentPlayTimeMs() {
+    ensurePlayTimeState()
+    if (gameState.activePlayStartedAtMs == null) return gameState.accumulatedPlayTimeMs
+
+    const liveElapsedMs = Date.now() - gameState.activePlayStartedAtMs
+    return gameState.accumulatedPlayTimeMs + Math.max(0, liveElapsedMs)
+}
+
+function getCurrentPlayTimeSeconds() {
+    return Math.floor(getCurrentPlayTimeMs() / 1000)
+}
+
 let gameState = {
     gameNumber: 0,
     isComplete: false,
     isWin: false,
     hasOpenedPuzzle: false,
     remainingFailures: 4,
+    accumulatedPlayTimeMs: 0,
+    activePlayStartedAtMs: null,
+    completedAtMs: null,
     items: [
         // Board games
         { text: "Chess", category: "board", submitted: false },
@@ -37,6 +103,10 @@ let gameState = {
 
 let cumulativeData = []
 
+if (window.DEBUG_MODE) {
+    cumulativeData = [];
+}
+
 const FLIP_ANIMATION_DURATION = 500
 const DANCE_ANIMATION_DURATION = 500
 
@@ -47,7 +117,10 @@ function resetGameState() {
         isComplete: false,
         isWin: false,
         hasOpenedPuzzle: false,
-        remainingFailures: 4,
+        remainingFailures: DEBUG_MODE ? 1 : 4,
+        accumulatedPlayTimeMs: 0,
+        activePlayStartedAtMs: null,
+        completedAtMs: null,
         items: getPuzzleItems(targetPuzzleIndex),
         submittedCount: 0,
         firstColour: null,

@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="styles/text.css">
     <script src="scripts/game.js" defer></script>
     <script src="scripts/core-game.js" defer></script>
+    <script src="scripts/api.js" defer></script>
     <script src="scripts/main.js" defer></script>
 </head>
 <body class="off-white">
@@ -205,7 +206,7 @@
             </div>
             <div class="overlay active" data-stats-overlay data-overlay-performance>
                 <div class="centered">
-                    <div class="text-box-info gap centered" style="--amount: 3em">
+                    <div class="text-box-info gap centered" style="--amount: 3em" data-performance-message>
                         You ranked in the top 10% of players today - <br> well done! Your average rank <br> over the last 30 days has been 54%.
                     </div>
                 </div>
@@ -214,7 +215,7 @@
                         Your overall statistics
                     </div>
                 </div>
-                <hr class="hr-stats gap" style="--amount: .5em">
+                <hr class="hr-stats gap" style="--amount: .25em">
                 <div class="stats-grid gap" style="--amount: 1em">
                     <div class="statistic">
                         <h4 class="statistic-data">0</h4>
@@ -253,7 +254,7 @@
             </div>
             <div class="overlay" data-stats-overlay data-overlay-rankings>
                 <div class="centered">
-                    <div class="text-box-info gap centered" style="--amount: .5em">
+                    <div class="text-box-info gap centered" style="--amount: .5em" data-rank-message>
                         You rank #342 out of 2,103 players
                     </div>
                 </div>
@@ -263,14 +264,44 @@
                     </div>
                 </div>
                 <hr class="hr-stats gap" style="--amount: .5em">
-                <hr class="hr-stats gap" style="--amount: 1.7em">
-                <hr class="hr-stats gap" style="--amount: 1.7em">
-                <hr class="hr-stats gap" style="--amount: 1.7em">
-                <hr class="hr-stats gap" style="--amount: 1.7em">
-                <hr class="hr-stats gap" style="--amount: 1.7em">
-                <hr class="hr-stats gap" style="--amount: 1.7em">
+                <div class="stats-cumulative-entry">
+                    <div class="stats-cumulative-number">1</div>
+                    <div class="stats-cumulative-name">Jeff</div>
+                    <div class="stats-cumulative-percent">100%</div>
+                </div>
+                <hr class="hr-stats gap" style="--amount: 1.2em">
+                <div class="stats-cumulative-entry">
+                    <div class="stats-cumulative-number">2</div>
+                    <div class="stats-cumulative-name">Name</div>
+                    <div class="stats-cumulative-percent">98%</div>
+                </div>
+                <hr class="hr-stats gap" style="--amount: 1.2em">
+                <div class="stats-cumulative-entry">
+                    <div class="stats-cumulative-number">3</div>
+                    <div class="stats-cumulative-name">Name</div>
+                    <div class="stats-cumulative-percent">95%</div>
+                </div>
+                <hr class="hr-stats gap" style="--amount: 1.2em">
+                <div class="stats-cumulative-entry">
+                    <div class="stats-cumulative-number">4</div>
+                    <div class="stats-cumulative-name">Name</div>
+                    <div class="stats-cumulative-percent">93%</div>
+                </div>
+                <hr class="hr-stats gap" style="--amount: 1.2em">
+                <div class="stats-cumulative-entry">
+                    <div class="stats-cumulative-number">5</div>
+                    <div class="stats-cumulative-name">Name</div>
+                    <div class="stats-cumulative-percent">90%</div>
+                </div>
+                <hr class="hr-stats gap" style="--amount: 1.2em">
+                <div class="stats-cumulative-entry">
+                    <div class="stats-cumulative-number">6</div>
+                    <div class="stats-cumulative-name">Name</div>
+                    <div class="stats-cumulative-percent">88%</div>
+                </div>
+                <hr class="hr-stats gap" style="--amount: 1.2em">
                 <div class="centered">
-                    <div class="text-box-info performance heading gap centered" style="--amount: 1em">
+                    <div class="text-box-info performance heading gap centered" style="--amount: 0.6em">
                         Your Performance percentile
                     </div>
                 </div>
@@ -279,24 +310,17 @@
                         Last 20 plays
                     </div>
                 </div>
-                <div class="left">
-                    <div class="text-box-info graph gap left" style="--amount: 1.5em">
-                        100%
+                <div class="stats-percentile-graph gap" style="--amount: 1.1em">
+                    <div class="stats-percentile-label top">100%</div>
+                    <div class="stats-percentile-label middle">50%</div>
+                    <div class="stats-percentile-label bottom">0%</div>
+                    <div class="stats-percentile-chart">
+                        <div class="stats-percentile-guide top"></div>
+                        <div class="stats-percentile-guide middle"></div>
+                        <div class="stats-percentile-guide bottom"></div>
+                        <svg class="stats-percentile-svg" viewBox="0 0 320 120" preserveAspectRatio="none" data-percentile-chart></svg>
                     </div>
                 </div>
-                <hr class="hr-stats dotted gap" style="--amount: .1em">
-                <div class="left">
-                    <div class="text-box-info graph gap left" style="--amount: 3.0em">
-                        50%
-                    </div>
-                </div>
-                <hr class="hr-stats dotted gap" style="--amount: .1em">
-                <div class="left">
-                    <div class="text-box-info graph gap left" style="--amount: 3.0em">
-                        0%
-                    </div>
-                </div>
-                <hr class="hr-stats dotted gap" style="--amount: .1em">
                 <div class="centered gap" style="--amount: 0.5em">
                     <button class="button stats selected share" onclick="pressShare()">
                         <img src="resources/share-icon.svg" class="share-icon">

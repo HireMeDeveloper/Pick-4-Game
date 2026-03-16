@@ -353,6 +353,18 @@ html {
     font-size: 0.9em;
     cursor: pointer;
     user-select: none;
+    transition: transform 0.5s ease;
+    position: relative;
+}
+
+.emphasize {
+    animation: emphasize 0.6s ease-in-out;
+}
+
+@keyframes emphasize {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 
 .game-button.selected {
@@ -419,4 +431,105 @@ html {
 
 .links-header-text-logo {
     padding-right: 4em;
+}
+
+.stats-cumulative-entry {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 17em;
+    margin: 0 auto;
+    height: 0;
+    position: relative;
+    top: 0.6em;
+    font-size: 0.7em;
+}
+
+.stats-cumulative-number {
+    width: 1.5em;
+    text-align: left;
+}
+
+.stats-cumulative-name {
+    flex: 1;
+    text-align: center;
+}
+
+.stats-cumulative-percent {
+    width: 4em;
+    text-align: right;
+}
+
+.stats-percentile-graph {
+    width: 17em;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2.5em 1fr;
+    grid-template-rows: repeat(3, 2.35em);
+    align-items: center;
+    position: relative;
+}
+
+.stats-percentile-label {
+    font-size: 0.5em;
+    text-align: left;
+    position: relative;
+    z-index: 3;
+}
+
+.stats-percentile-label.top {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.stats-percentile-label.middle {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.stats-percentile-label.bottom {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.stats-percentile-chart {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    position: relative;
+    height: 7.05em;
+    overflow: visible;
+}
+
+.stats-percentile-guide {
+    position: absolute;
+    left: -2.5em;
+    width: calc(100% + 2.5em);
+    border-top: dashed grey 0.01em;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.stats-percentile-guide.top {
+    top: 24%;
+    transform: translateY(-50%);
+}
+
+.stats-percentile-guide.middle {
+    top: 57.3333%;
+    transform: translateY(-50%);
+}
+
+.stats-percentile-guide.bottom {
+    top: 90.6666%;
+    transform: translateY(-50%);
+}
+
+.stats-percentile-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    z-index: 2;
 }
