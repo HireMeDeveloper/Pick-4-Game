@@ -28,6 +28,20 @@ const PERFORMANCE_SUMMARY = {
 
 const SENT_PLAY_DATA = []
 
+function toMinimalGameEntry(playData) {
+    const safeData = playData || {}
+
+    return {
+        gameNumber: Number.isFinite(safeData.gameNumber) ? safeData.gameNumber : null,
+        completed: Boolean(safeData.completed),
+        isWin: Boolean(safeData.isWin),
+        failuresUsed: Number.isFinite(safeData.failuresUsed) ? safeData.failuresUsed : 0,
+        firstColour: typeof safeData.firstColour === "string" ? safeData.firstColour : null,
+        playTimeSeconds: Number.isFinite(safeData.playTimeSeconds) ? safeData.playTimeSeconds : 0,
+        receivedAt: Date.now()
+    }
+}
+
 function getTop6WithCurrentPlayer() {
     const playerName = CURRENT_PLAYER_RANK.name
     const playerRank = CURRENT_PLAYER_RANK.rank
@@ -77,10 +91,7 @@ window.fakeRankingsApi = {
     },
 
     async sendCurrentSessionPlayData(playData) {
-        SENT_PLAY_DATA.push({
-            ...playData,
-            receivedAt: Date.now()
-        })
+        SENT_PLAY_DATA.push(toMinimalGameEntry(playData))
 
         return {
             success: true,
