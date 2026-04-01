@@ -5,11 +5,117 @@ const shuffleButton = document.querySelector('[data-shuffle-button]');
 const gameBars = document.querySelectorAll('[data-game-bar]');
 const mistakeIndicators = document.querySelectorAll('[data-mistake-indicator]');
 
+const GAME_BAR_COLOUR_CLASSES = ['green', 'lime', 'lilac', 'orange'];
+const GAME_TEXT_FIT_EPSILON = 1;
+
+let scheduledGameTextFitFrame = null;
+
 hasStartedGameLogic = false;
+
+function fitTextToContainer(element, maxFontSize, minFontSize, step = 0.02) {
+    if (!element || element.clientWidth === 0 || element.clientHeight === 0) return;
+
+    let fontSize = maxFontSize;
+    element.style.fontSize = `${fontSize}em`;
+
+    while (
+        fontSize > minFontSize
+        && (
+            element.scrollWidth > element.clientWidth + GAME_TEXT_FIT_EPSILON
+            || element.scrollHeight > element.clientHeight + GAME_TEXT_FIT_EPSILON
+        )
+    ) {
+        fontSize = Math.max(minFontSize, Number((fontSize - step).toFixed(2)));
+        element.style.fontSize = `${fontSize}em`;
+
+        if (fontSize === minFontSize) break;
+    }
+}
+
+function fitGameButtonText(button) {
+    fitTextToContainer(button, 0.9, 0.52);
+}
+
+function fitGameBarText(bar) {
+    const titleElement = bar.querySelector('.game-bar-title');
+    const wordsElement = bar.querySelector('.game-bar-words');
+
+    fitTextToContainer(titleElement, 1, 0.52);
+    fitTextToContainer(wordsElement, 0.82, 0.48);
+}
+
+function fitAllGameText() {
+    document.querySelectorAll('.game-button').forEach(fitGameButtonText);
+    gameBars.forEach(fitGameBarText);
+}
+
+function scheduleGameTextFit() {
+    if (scheduledGameTextFitFrame !== null) {
+        cancelAnimationFrame(scheduledGameTextFitFrame);
+    }
+
+    scheduledGameTextFitFrame = requestAnimationFrame(() => {
+        scheduledGameTextFitFrame = null;
+        fitAllGameText();
+    });
+}
+
+function getDisplayCategoryName(category) {
+    return category
+        .replace(/___/g, '___')
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+function renderGameBar(bar, category, words, fallbackColour, emphasize = false) {
+    if (!bar) return;
+
+    const resolvedColour = typeof window.resolveCategoryColour === 'function'
+        ? window.resolveCategoryColour(category, fallbackColour)
+        : fallbackColour;
+    const backgroundColour = typeof window.getGameBarColourValue === 'function'
+        ? window.getGameBarColourValue(resolvedColour)
+        : '';
+
+    const titleElement = document.createElement('div');
+    titleElement.className = 'game-bar-title';
+    titleElement.textContent = getDisplayCategoryName(category);
+
+    const wordsElement = document.createElement('div');
+    wordsElement.className = 'game-bar-words';
+    wordsElement.textContent = words.join(', ');
+
+    bar.replaceChildren(titleElement, wordsElement);
+    bar.classList.remove(...GAME_BAR_COLOUR_CLASSES);
+    if (resolvedColour) {
+        bar.classList.add(resolvedColour);
+        bar.dataset.barColour = resolvedColour;
+    } else {
+        delete bar.dataset.barColour;
+    }
+
+    if (backgroundColour) {
+        bar.style.backgroundColor = backgroundColour;
+    } else {
+        bar.style.removeProperty('background-color');
+    }
+
+    bar.classList.remove('hidden');
+    bar.classList.remove('emphasize');
+
+    if (emphasize) {
+        void bar.offsetWidth;
+        bar.classList.add('emphasize');
+    }
+
+    scheduleGameTextFit();
+}
 
 function startupGameLogic() {
     if (hasStartedGameLogic) return;
     hasStartedGameLogic = true;
+
+    window.addEventListener('resize', scheduleGameTextFit);
 
     fireEvent("onGameStart");
 
@@ -44,6 +150,7 @@ function startupGameLogic() {
     document.querySelectorAll('.game-button').forEach(btn => btn.classList.add('tile'));
     updateRemainingFailuresDisplay();
     initializeSubmittedGroups();
+    scheduleGameTextFit();
 
     if (gameState.isComplete) {
         disableAllGameButtons();
@@ -127,6 +234,7 @@ function populateButtons() {
     });
 
     updateButtons();
+    scheduleGameTextFit();
 }
 
 function getNextHiddenGameBar() {
@@ -187,18 +295,16 @@ function initializeSubmittedGroups() {
 
     // Get all game bars in order
     const bars = Array.from(gameBars);
+    const orderedCategories = Object.keys(puzzles[targetPuzzleIndex] || {}).filter(category => completedGroups[category]);
 
     // Iterate over each group and show the bars
-    Object.values(completedGroups).forEach((group, index) => {      
+    orderedCategories.forEach((category, index) => {
+        const group = completedGroups[category];
         if (group.length === 4) {
             const bar = bars[index];
             if (bar) {
                 const words = group.map(item => item.text);
-                const displayCat = group[0].category.replace(/___/g, '___').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
-                bar.classList.remove('green', 'lime', 'lilac', 'orange');
-                bar.classList.add(group[0].colour);
-                bar.classList.remove('hidden');
+                renderGameBar(bar, category, words, group[0].colour);
             }
         }
     });
@@ -281,16 +387,17 @@ function showAnswers(staggered = false) {
     const headerText = document.querySelector("[data-game-header-info]");
     headerText.textContent = "Answers";
 
-    // Show all categories in puzzle order (difficulty order)
-    const allCats = Object.keys(puzzles[targetPuzzleIndex]);
-    // Sort categories by their row order (based on min item index)
-    const sortedCats = allCats.sort((a, b) => {
-        const aMinIndex = Math.min(...gameState.items.filter(item => item.category === a).map(item => gameState.items.indexOf(item)));
-        const bMinIndex = Math.min(...gameState.items.filter(item => item.category === b).map(item => gameState.items.indexOf(item)));
-        return aMinIndex - bMinIndex;
-    });
+    // Categories are already in puzzle difficulty order.
+    const allCats = Object.keys(puzzles[targetPuzzleIndex] || {});
+    const completedCats = allCats.filter(cat =>
+        gameState.items
+            .filter(item => item.category === cat)
+            .every(item => item.completed)
+    );
+    const unresolvedCats = allCats.filter(cat => !completedCats.includes(cat));
+
     if (staggered) {
-        sortedCats.forEach((cat, index) => {
+        unresolvedCats.forEach((cat, unresolvedIndex) => {
             setTimeout(() => {
                 const catItems = gameState.items.filter(item => item.category === cat);
                 const buttons = catItems.map(item => {
@@ -298,23 +405,20 @@ function showAnswers(staggered = false) {
                     return document.querySelector(`.game-button[data-item-index="${gameState.items.indexOf(item)}"]`);
                 }).filter(btn => btn); // Filter out any nulls
 
+                const targetRowIndex = completedCats.length + unresolvedIndex;
+
                 // Animate the row to position
-                animateRowToPosition(buttons, index);
+                animateRowToPosition(buttons, targetRowIndex);
 
                 // After animation completes (including reset), show the bar
                 setTimeout(() => {
-                    const bar = gameBars[index];
+                    const bar = gameBars[targetRowIndex];
                     if (bar) {
                         const words = catItems.map(item => item.text);
-                        const displayCat = cat.replace(/___/g, '___').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
-                        bar.classList.remove('green', 'lime', 'lilac', 'orange');
-                        bar.classList.add(catItems[0].colour);
-                        bar.classList.remove('hidden');
-                        bar.classList.add('emphasize'); // Add emphasize animation
+                        renderGameBar(bar, cat, words, catItems[0].colour, true);
                     }
                 }, 600); // Wait for full animation + reset
-            }, index * 1500); // 1.5s delay between rows
+            }, unresolvedIndex * 1500); // 1.5s delay between rows
         });
     } else {
         let catIndex = 0;
@@ -323,13 +427,7 @@ function showAnswers(staggered = false) {
                 const cat = allCats[catIndex];
                 const catItems = gameState.items.filter(item => item.category === cat);
                 const words = catItems.map(item => item.text);
-                const displayCat = cat.replace(/___/g, '___').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                bar.innerHTML = `<b>${displayCat}</b><br>${words.join(', ')}`;
-                
-                bar.classList.remove('green', 'lime', 'lilac', 'orange');
-                bar.classList.add(catItems[0].colour);
-                bar.classList.remove('hidden');
-                bar.classList.add('emphasize');
+                renderGameBar(bar, cat, words, catItems[0].colour, true);
                 catIndex++;
             }
         });
@@ -435,16 +533,15 @@ function updateSubmittedButtons(selectedButtons, selectedItems) {
 
         // Clear original button
         originalBtn.classList.remove('selected');
+
+        fitGameButtonText(targetBtn);
+        fitGameButtonText(originalBtn);
     });
 
     // Show the category bar
     const category = selectedItems[0].category;
     const words = selectedItems.map(item => item.text);
-    bar.innerHTML = `<b>${category.toUpperCase()}</b><br>${words.join(', ')}`;
-    bar.classList.remove('green', 'lime', 'lilac', 'orange');
-    bar.classList.add(selectedItems[0].colour);
-    bar.classList.remove('hidden');
-    bar.classList.add('emphasize');
+    renderGameBar(bar, category, words, selectedItems[0].colour, true);
 }
 
 
@@ -488,6 +585,7 @@ function shuffleButtons() {
 
     // Step 6: update buttons UI
     updateButtons();
+    scheduleGameTextFit();
 }
 
 // Animated shuffle for a specific row: Move correct buttons to the target row (without showing bar)

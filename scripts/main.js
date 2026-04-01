@@ -1,6 +1,57 @@
 const DATE_OF_FIRST_PUZZLE = new Date(2025, 1, 1)
 const ALLOW_MOBILE_SHARE = true; 
 window.DEBUG_MODE = false; // Controls if data is reset on load and the number of allowed failures
+const USE_DUMMY_STATS_DATA = false; // Toggle true to validate stats UI with deterministic test data
+const ACTIVE_DUMMY_STATS_SET = 'setA'; // setA | setB
+
+const DUMMY_STATS_CUMULATIVE_SETS = Object.freeze({
+    setA: Object.freeze([
+        { gameNumber: 394, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 45 },
+        { gameNumber: 395, completed: true, isWin: true, failuresUsed: 1, firstColour: 'lime', playTimeSeconds: 63 },
+        { gameNumber: 396, completed: true, isWin: true, failuresUsed: 2, firstColour: 'lilac', playTimeSeconds: 81 },
+        { gameNumber: 397, completed: true, isWin: true, failuresUsed: 0, firstColour: 'orange', playTimeSeconds: 99 },
+        { gameNumber: 398, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 117 },
+        { gameNumber: 399, completed: true, isWin: true, failuresUsed: 2, firstColour: 'lime', playTimeSeconds: 135 },
+        { gameNumber: 400, completed: true, isWin: true, failuresUsed: 0, firstColour: 'lilac', playTimeSeconds: 153 },
+        { gameNumber: 401, completed: true, isWin: true, failuresUsed: 1, firstColour: 'orange', playTimeSeconds: 171 },
+        { gameNumber: 402, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 189 },
+        { gameNumber: 403, completed: true, isWin: true, failuresUsed: 0, firstColour: 'lime', playTimeSeconds: 45 },
+        { gameNumber: 404, completed: true, isWin: true, failuresUsed: 1, firstColour: 'lilac', playTimeSeconds: 63 },
+        { gameNumber: 405, completed: true, isWin: true, failuresUsed: 2, firstColour: 'orange', playTimeSeconds: 81 },
+        { gameNumber: 406, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 99 },
+        { gameNumber: 407, completed: true, isWin: true, failuresUsed: 1, firstColour: 'lime', playTimeSeconds: 117 },
+        { gameNumber: 408, completed: true, isWin: true, failuresUsed: 2, firstColour: 'lilac', playTimeSeconds: 135 },
+        { gameNumber: 409, completed: true, isWin: true, failuresUsed: 0, firstColour: 'orange', playTimeSeconds: 153 },
+        { gameNumber: 410, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 171 },
+        { gameNumber: 411, completed: true, isWin: true, failuresUsed: 2, firstColour: 'lime', playTimeSeconds: 189 },
+        { gameNumber: 412, completed: true, isWin: true, failuresUsed: 0, firstColour: 'lilac', playTimeSeconds: 45 },
+        { gameNumber: 413, completed: true, isWin: true, failuresUsed: 1, firstColour: 'orange', playTimeSeconds: 63 },
+        { gameNumber: 414, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 81 },
+        { gameNumber: 415, completed: true, isWin: true, failuresUsed: 0, firstColour: 'lime', playTimeSeconds: 99 },
+        { gameNumber: 416, completed: true, isWin: true, failuresUsed: 1, firstColour: 'lilac', playTimeSeconds: 117 },
+        { gameNumber: 417, completed: true, isWin: true, failuresUsed: 2, firstColour: 'orange', playTimeSeconds: 135 },
+        { gameNumber: 418, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 153 },
+        { gameNumber: 419, completed: true, isWin: true, failuresUsed: 1, firstColour: 'lime', playTimeSeconds: 171 },
+        { gameNumber: 420, completed: true, isWin: true, failuresUsed: 2, firstColour: 'lilac', playTimeSeconds: 189 },
+        { gameNumber: 421, completed: true, isWin: true, failuresUsed: 0, firstColour: 'orange', playTimeSeconds: 45 },
+        { gameNumber: 422, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 63 },
+        { gameNumber: 423, completed: false, isWin: false, failuresUsed: 3, firstColour: null, playTimeSeconds: 11 }
+    ]),
+    setB: Object.freeze([
+        { gameNumber: 500, completed: true, isWin: true, failuresUsed: 0, firstColour: 'orange', playTimeSeconds: 61 },
+        { gameNumber: 501, completed: true, isWin: true, failuresUsed: 1, firstColour: 'lilac', playTimeSeconds: 72 },
+        { gameNumber: 502, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 93 },
+        { gameNumber: 503, completed: true, isWin: true, failuresUsed: 2, firstColour: 'lime', playTimeSeconds: 88 },
+        { gameNumber: 504, completed: true, isWin: true, failuresUsed: 0, firstColour: 'orange', playTimeSeconds: 79 },
+        { gameNumber: 505, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 95 },
+        { gameNumber: 506, completed: true, isWin: true, failuresUsed: 1, firstColour: 'lilac', playTimeSeconds: 69 },
+        { gameNumber: 507, completed: true, isWin: true, failuresUsed: 2, firstColour: 'lime', playTimeSeconds: 84 },
+        { gameNumber: 508, completed: true, isWin: true, failuresUsed: 0, firstColour: 'orange', playTimeSeconds: 73 },
+        { gameNumber: 509, completed: true, isWin: false, failuresUsed: 4, firstColour: 'green', playTimeSeconds: 101 },
+        { gameNumber: 510, completed: true, isWin: true, failuresUsed: 1, firstColour: 'lilac', playTimeSeconds: 67 },
+        { gameNumber: 511, completed: false, isWin: false, failuresUsed: 2, firstColour: null, playTimeSeconds: 14 }
+    ])
+});
 
 if (window.DEBUG_MODE) {
     localStorage.removeItem('pick-4-game-data');
@@ -22,6 +73,78 @@ let puzzles = [];
 
 let targetGameNumber = 0;
 let targetPuzzleIndex = 0;
+
+function createDummyCumulativeData() {
+    const fixture = DUMMY_STATS_CUMULATIVE_SETS[ACTIVE_DUMMY_STATS_SET] || DUMMY_STATS_CUMULATIVE_SETS.setA;
+    return fixture.map(entry => ({ ...entry }));
+}
+
+function getStatsDataSource() {
+    return USE_DUMMY_STATS_DATA ? createDummyCumulativeData() : cumulativeData;
+}
+
+const GAME_BAR_COLOUR_VALUES = Object.freeze({
+    green: '#009982',
+    lime: '#D2DB5D',
+    lilac: '#B8A4CF',
+    orange: '#EF806C'
+});
+
+function normalizeColourName(colour) {
+    if (typeof colour !== 'string') return null;
+
+    const normalizedColour = colour.trim().toLowerCase();
+    if (normalizedColour === 'purple') return 'lilac';
+
+    return Object.prototype.hasOwnProperty.call(GAME_BAR_COLOUR_VALUES, normalizedColour)
+        ? normalizedColour
+        : null;
+}
+
+function getPuzzleCategoryConfig(category, puzzleIndex = targetPuzzleIndex) {
+    if (typeof category !== 'string') return null;
+
+    const puzzle = puzzles[puzzleIndex];
+    if (!puzzle) return null;
+
+    return puzzle[category] || null;
+}
+
+function resolveCategoryColour(category, fallbackColour = null, puzzleIndex = targetPuzzleIndex) {
+    const categoryConfig = getPuzzleCategoryConfig(category, puzzleIndex);
+
+    return normalizeColourName(categoryConfig?.colour)
+        || normalizeColourName(fallbackColour)
+        || 'green';
+}
+
+function getGameBarColourValue(colour) {
+    const normalizedColour = normalizeColourName(colour);
+    return GAME_BAR_COLOUR_VALUES[normalizedColour || 'green'];
+}
+
+function normalizeGameStateItems(items, puzzleIndex = targetPuzzleIndex) {
+    if (!Array.isArray(items)) {
+        return getPuzzleItems(puzzleIndex);
+    }
+
+    return items.map(item => {
+        const safeItem = item || {};
+        const category = typeof safeItem.category === 'string' ? safeItem.category : '';
+
+        return {
+            ...safeItem,
+            text: typeof safeItem.text === 'string' ? safeItem.text : '',
+            category,
+            colour: resolveCategoryColour(category, safeItem.colour, puzzleIndex),
+            submitted: Boolean(safeItem.submitted),
+            completed: Boolean(safeItem.completed)
+        };
+    });
+}
+
+window.resolveCategoryColour = resolveCategoryColour;
+window.getGameBarColourValue = getGameBarColourValue;
 
 function parseCSVLine(line) {
     const result = [];
@@ -68,8 +191,8 @@ async function fetchDictionary() {
     // Use modulo to determine the target game number
     targetGameNumber = daysSinceFirstPuzzle;
     targetPuzzleIndex = targetGameNumber % puzzles.length;
-    fetchGameState();
     fetchCumulativeData();
+    fetchGameState();
 }
 
 fetchDictionary()
@@ -82,7 +205,13 @@ function getPuzzleItems(puzzleIndex) {
 
     for (const category in puzzle) {
         puzzle[category].words.forEach(text => {
-            items.push({ text, category, colour: puzzle[category].colour, submitted: false, completed: false});
+            items.push({
+                text,
+                category,
+                colour: resolveCategoryColour(category, puzzle[category].colour, puzzleIndex),
+                submitted: false,
+                completed: false
+            });
         });
     }
 
@@ -277,6 +406,8 @@ function fetchGameState() {
         resetGameState()
     }
 
+    gameState.items = normalizeGameStateItems(gameState.items)
+
     if (typeof ensurePlayTimeState === "function") ensurePlayTimeState()
 
     if (gameState.hasOpenedPuzzle === true) {
@@ -287,6 +418,12 @@ function fetchGameState() {
 }
 
 function fetchCumulativeData() {
+    if (USE_DUMMY_STATS_DATA) {
+        cumulativeData = createDummyCumulativeData();
+        console.log("Cumulative Data was set to dummy test data")
+        return;
+    }
+
     const localStoreJSON = localStorage.getItem("pick-4-cumulative-data")
     if (localStoreJSON != null) {
         console.log("Cumulative Data was Found: " + localStoreJSON)
@@ -420,10 +557,11 @@ function updateAllStats() {
     updatePerformanceFromApi()
     updateRankingsFromApi()
 
-    if (!cumulativeData || cumulativeData.length === 0) return;
+    const statsSource = getStatsDataSource();
+    if (!statsSource || statsSource.length === 0) return;
 
     // Sort by gameNumber
-    let sorted = cumulativeData.sort((a, b) => a.gameNumber - b.gameNumber);
+    let sorted = [...statsSource].sort((a, b) => a.gameNumber - b.gameNumber);
     let completed = sorted.filter(e => e.completed).length;
 
     let totalGames = sorted.length;

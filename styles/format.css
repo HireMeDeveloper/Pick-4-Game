@@ -351,6 +351,12 @@ html {
     align-items: center;
     text-align: center;
     font-size: 0.9em;
+    line-height: 1.05;
+    padding: 0.35em;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: pointer;
     user-select: none;
     transition: transform 0.5s ease;
@@ -383,8 +389,26 @@ html {
     align-items: center;
     text-align: center;
     font-size: 0.9em;
-    line-height: .6em;
+    line-height: 1.1;
+    gap: 0.2em;
+    padding: 0.5em 0.75em;
+    box-sizing: border-box;
     grid-column: span 4;
+}
+
+.game-bar-title {
+    font-weight: 700;
+    line-height: 1.05;
+    width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.game-bar-words {
+    line-height: 1.1;
+    width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .game-bar.green {
