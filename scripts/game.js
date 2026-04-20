@@ -1,4 +1,5 @@
 let timerStarted = false
+const DEFAULT_LEADERBOARD_NAME = ""
 
 function ensurePlayTimeState() {
     if (typeof gameState.accumulatedPlayTimeMs !== "number") {
@@ -65,6 +66,7 @@ function getCurrentPlayTimeSeconds() {
 
 let gameState = {
     gameNumber: 0,
+    username: DEFAULT_LEADERBOARD_NAME,
     isComplete: false,
     isWin: false,
     hasOpenedPuzzle: false,
@@ -111,9 +113,12 @@ const FLIP_ANIMATION_DURATION = 500
 const DANCE_ANIMATION_DURATION = 500
 
 function resetGameState() {
+    const existingUsername = typeof gameState?.username === "string" ? gameState.username : ""
+
     gameState = {
         gameNumber: targetGameNumber,
         puzzleNumber: targetPuzzleIndex,
+        username: existingUsername || DEFAULT_LEADERBOARD_NAME,
         isComplete: false,
         isWin: false,
         hasOpenedPuzzle: false,

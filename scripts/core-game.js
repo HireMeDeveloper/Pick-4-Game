@@ -61,10 +61,28 @@ function scheduleGameTextFit() {
 }
 
 function getDisplayCategoryName(category) {
-    return category
-        .replace(/___/g, '___')
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, letter => letter.toUpperCase());
+    const normalizedCategory = String(category || '').replace(/_/g, ' ');
+
+    let displayCategory = '';
+    let shouldCapitalize = true;
+
+    for (const character of normalizedCategory) {
+        if (shouldCapitalize && /[a-zA-Z]/.test(character)) {
+            displayCategory += character.toUpperCase();
+            shouldCapitalize = false;
+            continue;
+        }
+
+        displayCategory += character;
+
+        if (/\s|[\-\/([{"]/.test(character)) {
+            shouldCapitalize = true;
+        } else if (character !== "'") {
+            shouldCapitalize = false;
+        }
+    }
+
+    return displayCategory;
 }
 
 function renderGameBar(bar, category, words, fallbackColour, emphasize = false) {
@@ -100,6 +118,8 @@ function renderGameBar(bar, category, words, fallbackColour, emphasize = false) 
         bar.style.removeProperty('background-color');
     }
 
+    bar.dataset.barCategory = category;
+
     bar.classList.remove('hidden');
     bar.classList.remove('emphasize');
 
@@ -109,6 +129,45 @@ function renderGameBar(bar, category, words, fallbackColour, emphasize = false) 
     }
 
     scheduleGameTextFit();
+}
+
+function hideButtonsForRow(rowIndex) {
+    const buttons = Array.from(document.querySelectorAll('.game-button'));
+    const rowButtons = buttons.slice(rowIndex * 4, rowIndex * 4 + 4);
+
+    rowButtons.forEach(button => {
+        button.classList.add('hidden');
+        button.classList.add('submitted');
+        button.classList.remove('selected');
+    });
+}
+
+function showAllGameButtons() {
+    document.querySelectorAll('.game-button').forEach(button => {
+        button.classList.remove('hidden');
+    });
+}
+
+function resetGameLogic() {
+    hasStartedGameLogic = false;
+
+    gameBars.forEach(bar => {
+        bar.replaceChildren();
+        bar.classList.remove(...GAME_BAR_COLOUR_CLASSES);
+        bar.style.removeProperty('background-color');
+        bar.classList.add('hidden');
+        delete bar.dataset.barCategory;
+        delete bar.dataset.barColour;
+    });
+
+    mistakeIndicators.forEach(indicator => {
+        indicator.classList.remove('used');
+    });
+
+    document.querySelectorAll('.game-button').forEach(btn => {
+        btn.classList.remove('selected', 'submitted', 'tile', 'hidden');
+        btn.style.removeProperty('transform');
+    });
 }
 
 function startupGameLogic() {
@@ -122,31 +181,31 @@ function startupGameLogic() {
     gameState.hasOpenedPuzzle = true
     storeGameStateData()
 
-    // Setup event listeners for game buttons
+    // Setup event listeners for game buttons (clone to remove any prior listeners)
     document.querySelectorAll('.game-button').forEach(button => {
-        button.addEventListener('click', () => {
-            if (button.classList.contains('submitted')) return;
+        const fresh = button.cloneNode(true);
+        button.replaceWith(fresh);
+        fresh.addEventListener('click', () => {
+            if (fresh.classList.contains('submitted')) return;
 
             // Count selected buttons
             const beforeCount = document.querySelectorAll('.game-button.selected').length;
 
             // Can only select 4 elements
-            if (beforeCount < 4 || button.classList.contains('selected')) {
-                button.classList.toggle('selected');
+            if (beforeCount < 4 || fresh.classList.contains('selected')) {
+                fresh.classList.toggle('selected');
             }
 
             updateButtons();
         });
     });
 
-    // Setup shuffle button
+    // Setup shuffle button (remove first to avoid duplicate listeners)
+    shuffleButton.removeEventListener('click', shuffleButtons);
     shuffleButton.addEventListener('click', shuffleButtons);
 
-    gameState.items.forEach(item => {
-        item.submitted = false;
-    });
-
     populateButtons();
+    showAllGameButtons();
     document.querySelectorAll('.game-button').forEach(btn => btn.classList.add('tile'));
     updateRemainingFailuresDisplay();
     initializeSubmittedGroups();
@@ -305,6 +364,7 @@ function initializeSubmittedGroups() {
             if (bar) {
                 const words = group.map(item => item.text);
                 renderGameBar(bar, category, words, group[0].colour);
+                hideButtonsForRow(index);
             }
         }
     });
@@ -350,6 +410,8 @@ function updateRemainingFailuresDisplay() {
     for (let i = 0; i < mistakeIndicators.length; i++) {
         if (i >= gameState.remainingFailures) {
             mistakeIndicators[i].classList.add("hidden");
+        } else {
+            mistakeIndicators[i].classList.remove("hidden");
         }
     }
  }
@@ -416,6 +478,12 @@ function showAnswers(staggered = false) {
                     if (bar) {
                         const words = catItems.map(item => item.text);
                         renderGameBar(bar, cat, words, catItems[0].colour, true);
+                        hideButtonsForRow(targetRowIndex);
+                    }
+
+                    // After the last bar is shown, reorder all bars to difficulty order
+                    if (unresolvedIndex === unresolvedCats.length - 1) {
+                        setTimeout(() => reorderBarsToDifficultyOrder(), 500);
                     }
                 }, 600); // Wait for full animation + reset
             }, unresolvedIndex * 1500); // 1.5s delay between rows
@@ -428,10 +496,93 @@ function showAnswers(staggered = false) {
                 const catItems = gameState.items.filter(item => item.category === cat);
                 const words = catItems.map(item => item.text);
                 renderGameBar(bar, cat, words, catItems[0].colour, true);
+                hideButtonsForRow(catIndex);
                 catIndex++;
             }
         });
     }
+}
+
+function reorderBarsToDifficultyOrder() {
+    const allCats = Object.keys(puzzles[targetPuzzleIndex] || {});
+    const bars = Array.from(gameBars);
+
+    // Snapshot current content of each bar
+    const barSnapshots = bars.map(bar => {
+        const titleEl = bar.querySelector('.game-bar-title');
+        const wordsEl = bar.querySelector('.game-bar-words');
+        return {
+            category: bar.dataset.barCategory || null,
+            barColour: bar.dataset.barColour || null,
+            bgColor: bar.style.backgroundColor,
+            colourClass: ['green', 'lime', 'lilac', 'orange'].find(c => bar.classList.contains(c)) || null,
+            titleText: titleEl ? titleEl.textContent : '',
+            wordsText: wordsEl ? wordsEl.textContent : ''
+        };
+    });
+
+    // Build the target content order aligned to allCats difficulty order
+    const targetSnapshots = allCats.map(cat => barSnapshots.find(s => s.category === cat) || null);
+
+    // Check if already in correct order — skip animation if so
+    const alreadyOrdered = allCats.every((cat, i) => barSnapshots[i]?.category === cat);
+    if (alreadyOrdered) return;
+
+    // Phase 1: record start positions of each bar (FLIP — record)
+    const overlayGrid = document.querySelector('.overlay-grid');
+    const gridRect = overlayGrid.getBoundingClientRect();
+    const startY = bars.map(bar => bar.getBoundingClientRect().top - gridRect.top);
+
+    // Phase 2: swap content into target order (instantaneous DOM update)
+    bars.forEach((bar, i) => {
+        const snap = targetSnapshots[i];
+        if (!snap) return;
+
+        const titleEl = bar.querySelector('.game-bar-title');
+        const wordsEl = bar.querySelector('.game-bar-words');
+
+        bar.dataset.barCategory = snap.category;
+        bar.dataset.barColour = snap.barColour;
+        bar.style.backgroundColor = snap.bgColor;
+        bar.classList.remove('green', 'lime', 'lilac', 'orange');
+        if (snap.colourClass) bar.classList.add(snap.colourClass);
+        if (titleEl) titleEl.textContent = snap.titleText;
+        if (wordsEl) wordsEl.textContent = snap.wordsText;
+    });
+
+    // Phase 3: compute end positions after swap and apply reverse transforms (FLIP — invert)
+    const endY = bars.map(bar => bar.getBoundingClientRect().top - gridRect.top);
+
+    bars.forEach((bar, i) => {
+        const sourceIndex = barSnapshots.findIndex(s => s.category === targetSnapshots[i]?.category);
+        if (sourceIndex === -1) return;
+
+        const deltaY = startY[sourceIndex] - endY[i];
+        if (deltaY === 0) return;
+
+        bar.style.transition = 'none';
+        bar.style.transform = `translateY(${deltaY}px)`;
+    });
+
+    // Force reflow so transforms are applied before animating
+    bars.forEach(bar => bar.offsetHeight);
+
+    // Phase 4: animate to final position (FLIP — play)
+    requestAnimationFrame(() => {
+        bars.forEach(bar => {
+            bar.style.transition = 'transform 0.6s ease';
+            bar.style.transform = '';
+        });
+
+        setTimeout(() => {
+            bars.forEach(bar => {
+                bar.style.transition = '';
+                bar.style.transform = '';
+            });
+            document.querySelectorAll('.game-button').forEach(btn => btn.classList.add('hidden'));
+            scheduleGameTextFit();
+        }, 650);
+    });
 }
 
 function disableAllGameButtons() {
@@ -542,6 +693,7 @@ function updateSubmittedButtons(selectedButtons, selectedItems) {
     const category = selectedItems[0].category;
     const words = selectedItems.map(item => item.text);
     renderGameBar(bar, category, words, selectedItems[0].colour, true);
+    hideButtonsForRow(barIndex);
 }
 
 
@@ -559,10 +711,10 @@ function shuffleButtons() {
     // Step 3: shuffle remaining items
     const shuffledItems = shuffleArray(remainingItems);
 
-    // Step 4: assign shuffled items only to buttons that are not submitted
+    // Step 4: assign shuffled items only to buttons not behind a placed bar
     buttons.forEach(btn => {
         const currentItem = gameState.items.find(it => it.text.trim() === btn.textContent.trim());
-        if (!currentItem || !currentItem.submitted) {
+        if (!currentItem || !currentItem.completed) {
             const newItem = shuffledItems.shift();
             if (newItem) {
                 btn.textContent = newItem.text.trim();
@@ -611,14 +763,19 @@ function animateRowToPosition(correctButtons, targetRowIndex) {
     const slotPositions = allButtons.map(button => startPositions.get(button));
     const finalOrder = [...allButtons];
 
+    // Keep rows with already-shown bars fixed by only shuffling the unresolved section.
+    const movableOrder = finalOrder.slice(rowStartIndex);
     for (let i = 0; i < 4; i++) {
-        const slotIndex = rowStartIndex + i;
         const desiredButton = correctButtons[i];
-        const currentIndex = finalOrder.indexOf(desiredButton);
+        const currentPoolIndex = movableOrder.indexOf(desiredButton);
 
-        if (currentIndex === -1 || currentIndex === slotIndex) continue;
+        if (currentPoolIndex === -1 || currentPoolIndex === i) continue;
 
-        [finalOrder[slotIndex], finalOrder[currentIndex]] = [finalOrder[currentIndex], finalOrder[slotIndex]];
+        [movableOrder[i], movableOrder[currentPoolIndex]] = [movableOrder[currentPoolIndex], movableOrder[i]];
+    }
+
+    for (let i = 0; i < movableOrder.length; i++) {
+        finalOrder[rowStartIndex + i] = movableOrder[i];
     }
 
     // Animate each tile directly to its unique final slot position
@@ -642,11 +799,6 @@ function animateRowToPosition(correctButtons, targetRowIndex) {
         button.style.transition = 'transform 0.5s ease';
     });
 
-    for (let i = 0; i < 4; i++) {
-        const incomingButton = correctButtons[i];
-        if (incomingButton) incomingButton.classList.add('submitted');
-    }
-
     // After animation, commit DOM order so next row uses accurate tile positions
     setTimeout(() => {
         finalOrder.forEach(button => grid.appendChild(button));
@@ -658,6 +810,7 @@ function animateRowToPosition(correctButtons, targetRowIndex) {
 
         const committedRowButtons = finalOrder.slice(rowStartIndex, rowStartIndex + 4);
         committedRowButtons.forEach(button => {
+            button.classList.add('hidden');
             button.classList.add('submitted');
             button.classList.remove('selected');
         });

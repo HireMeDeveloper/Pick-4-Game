@@ -63,8 +63,27 @@ const alertContainer = document.querySelector("[data-alert-container]")
 const statsAlertContainer = document.querySelector("[data-stats-alert-container]")
 const shareButton = document.querySelector("[data-share-button]")
 const playButton = document.querySelector("[data-play-button]")
+const yesNoPopupElement = document.querySelector("[data-yes-no-popup]")
+const yesNoPopupTextElement = document.querySelector("[data-yes-no-popup-text]")
+const yesNoPopupYesButton = document.querySelector("[data-yes-no-popup-yes]")
+const yesNoPopupNoButton = document.querySelector("[data-yes-no-popup-no]")
+const namePopupElement = document.querySelector("[data-name-popup]")
+const namePopupInput = document.querySelector("[data-name-popup-input]")
+const namePopupSubmitButton = document.querySelector("[data-name-popup-submit]")
 
 let canInteract = false;
+let pendingYesCallback = null
+let pendingNoCallback = null
+let pendingNameSubmitCallback = null
+
+const LEADERBOARD_NAME_MAX_LENGTH = 15
+const USER_ID_LENGTH = 15
+
+let cumulativeProfile = {
+    userId: "",
+    username: "",
+    hasSetUsername: false
+}
 
 window.dataLayer = window.dataLayer || [];
 
@@ -81,6 +100,87 @@ function createDummyCumulativeData() {
 
 function getStatsDataSource() {
     return USE_DUMMY_STATS_DATA ? createDummyCumulativeData() : cumulativeData;
+}
+
+function generateUserId(length = USER_ID_LENGTH) {
+    const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+    const randomValues = new Uint8Array(length)
+    crypto.getRandomValues(randomValues)
+
+    let id = ""
+    for (let i = 0; i < randomValues.length; i++) {
+        id += alphabet[randomValues[i] % alphabet.length]
+    }
+
+    return id
+}
+
+function normalizeLeaderboardName(name) {
+    if (typeof name !== "string") return ""
+    return name.trim().slice(0, LEADERBOARD_NAME_MAX_LENGTH)
+}
+
+function ensureCumulativeProfile() {
+    const hasValidUserId = typeof cumulativeProfile.userId === "string"
+        && cumulativeProfile.userId.trim().length === USER_ID_LENGTH
+
+    if (!hasValidUserId) {
+        cumulativeProfile.userId = generateUserId(USER_ID_LENGTH)
+    }
+
+    if (typeof cumulativeProfile.hasSetUsername !== "boolean") {
+        cumulativeProfile.hasSetUsername = false
+    }
+
+    const normalizedUsername = normalizeLeaderboardName(cumulativeProfile.username)
+    cumulativeProfile.username = normalizedUsername || cumulativeProfile.userId
+}
+
+function clampScore(value) {
+    return Math.max(0, Math.min(100, Math.round(value)))
+}
+
+function getCorrectGuessBaseScore(correctGuesses) {
+    const guessCount = Math.max(0, Math.min(4, Number(correctGuesses) || 0))
+    const baseMap = [0, 30, 60, 80, 100]
+    return baseMap[guessCount]
+}
+
+function getMistakePenalty(mistakesUsed) {
+    const mistakes = Math.max(0, Number(mistakesUsed) || 0)
+    if (mistakes <= 0) return 0
+    if (mistakes === 1) return 10
+    if (mistakes === 2) return 22
+    if (mistakes === 3) return 36
+    return 999
+}
+
+function getTimePenalty(playTimeSeconds) {
+    const seconds = Math.max(0, Number(playTimeSeconds) || 0)
+
+    if (seconds <= 30) return 0
+    if (seconds <= 59) return 3
+    if (seconds <= 90) return 6
+    if (seconds <= 120) return 9
+    if (seconds <= 180) return 12
+    if (seconds <= 240) return 15
+    if (seconds <= 300) return 18
+    return 20
+}
+
+function calculateScorePercent(correctGuesses, mistakesUsed, playTimeSeconds) {
+    const guesses = Math.max(0, Math.min(4, Number(correctGuesses) || 0))
+    const mistakes = Math.max(0, Number(mistakesUsed) || 0)
+
+    if (mistakes >= 4) return 0
+    if (mistakes >= 4 && guesses === 0) return 0
+
+    const baseScore = getCorrectGuessBaseScore(guesses)
+    const mistakePenalty = getMistakePenalty(mistakes)
+    const timePenalty = getTimePenalty(playTimeSeconds)
+
+    const score = baseScore - mistakePenalty - timePenalty
+    return clampScore(score)
 }
 
 const GAME_BAR_COLOUR_VALUES = Object.freeze({
@@ -266,6 +366,134 @@ function showShareAlert(message, duration = 1000) {
     }, duration)
 }
 
+function hideNamePopup() {
+    if (!namePopupElement) return
+
+    namePopupElement.classList.add("hidden")
+    pendingNameSubmitCallback = null
+}
+
+function isLeaderboardNameValid(name) {
+    if (typeof name !== "string") return false
+
+    const trimmedName = name.trim()
+
+    if (trimmedName.length === 0 || trimmedName.length > LEADERBOARD_NAME_MAX_LENGTH) {
+        return false
+    }
+
+    return true
+}
+
+function sanitizeLeaderboardNameInput(rawName) {
+    if (typeof rawName !== "string") return ""
+
+    return rawName.slice(0, LEADERBOARD_NAME_MAX_LENGTH)
+}
+
+function updateNamePopupSubmitState() {
+    if (!namePopupInput || !namePopupSubmitButton) return false
+
+    const isValidName = isLeaderboardNameValid(namePopupInput.value)
+    namePopupSubmitButton.disabled = !isValidName
+    namePopupSubmitButton.classList.toggle("enabled", isValidName)
+
+    return isValidName
+}
+
+function showNamePopup(onSubmitName) {
+    if (!namePopupElement || !namePopupInput || !namePopupSubmitButton) return
+
+    pendingNameSubmitCallback = typeof onSubmitName === "function" ? onSubmitName : null
+    namePopupInput.value = ""
+    updateNamePopupSubmitState()
+    namePopupElement.classList.remove("hidden")
+    namePopupInput.focus()
+}
+
+function hideYesNoPopup() {
+    if (!yesNoPopupElement) return
+
+    yesNoPopupElement.classList.add("hidden")
+    pendingYesCallback = null
+    pendingNoCallback = null
+}
+
+function showYesNoPopup(topText, onYes, onNo = null) {
+    if (!yesNoPopupElement || !yesNoPopupTextElement) return
+
+    hideNamePopup()
+
+    const safeTopText = typeof topText === "string" && topText.trim() !== ""
+        ? topText
+        : "Are you sure?"
+
+    yesNoPopupTextElement.textContent = safeTopText
+    pendingYesCallback = typeof onYes === "function" ? onYes : null
+    pendingNoCallback = typeof onNo === "function" ? onNo : null
+    yesNoPopupElement.classList.remove("hidden")
+}
+
+function executeWithYesNoPopup(topText, executable, onNoCallback = null) {
+    showYesNoPopup(topText, executable, onNoCallback)
+}
+
+window.showYesNoPopup = showYesNoPopup
+window.executeWithYesNoPopup = executeWithYesNoPopup
+
+if (namePopupInput) {
+    namePopupInput.addEventListener("input", () => {
+        const sanitizedValue = sanitizeLeaderboardNameInput(namePopupInput.value)
+
+        if (namePopupInput.value !== sanitizedValue) {
+            namePopupInput.value = sanitizedValue
+        }
+
+        updateNamePopupSubmitState()
+    })
+}
+
+if (namePopupSubmitButton) {
+    namePopupSubmitButton.addEventListener("click", () => {
+        if (!namePopupInput) return
+
+        const enteredName = namePopupInput.value.trim()
+        if (!isLeaderboardNameValid(enteredName)) {
+            updateNamePopupSubmitState()
+            return
+        }
+
+        const submitCallback = pendingNameSubmitCallback
+        hideNamePopup()
+
+        if (typeof submitCallback === "function") {
+            submitCallback(enteredName)
+        }
+    })
+}
+
+if (yesNoPopupYesButton) {
+    yesNoPopupYesButton.addEventListener("click", () => {
+        const callback = pendingYesCallback
+        hideYesNoPopup()
+
+        if (typeof callback === "function") {
+            callback()
+        }
+    })
+}
+
+if (yesNoPopupNoButton) {
+    yesNoPopupNoButton.addEventListener("click", () => {
+        const callback = pendingNoCallback
+        hideYesNoPopup()
+
+        if (typeof callback === "function") {
+            callback()
+        }
+    })
+}
+
 function showPage(pageId, oldPage = null) {
     if (oldPage === null) {
         const page = document.querySelector('.page.active')
@@ -324,12 +552,21 @@ function stopInteraction() {
 }
 
 function storeGameStateData() {
+    ensureCumulativeProfile()
+    const normalizedUsername = normalizeLeaderboardName(gameState.username)
+    gameState.username = normalizedUsername || cumulativeProfile.username
+    cumulativeProfile.username = gameState.username
+
     localStorage.setItem("pick-4-game-data", JSON.stringify(gameState))
 
     let currentPlayTimeSeconds = 0
     if (typeof getCurrentPlayTimeSeconds === "function") {
         currentPlayTimeSeconds = getCurrentPlayTimeSeconds()
     }
+
+    const correctGuesses = Math.max(0, Math.min(4, Number(gameState.submittedCount) || 0))
+    const failuresUsed = Math.max(0, 4 - (Number(gameState.remainingFailures) || 0))
+    const scorePercent = calculateScorePercent(correctGuesses, failuresUsed, currentPlayTimeSeconds)
 
     var hasCumulativeDataForPuzzle = false
     cumulativeData.forEach(entry => {
@@ -343,9 +580,13 @@ function storeGameStateData() {
             gameNumber: gameState.gameNumber,
             completed: gameState.isComplete,
             isWin: gameState.isWin,
-            failuresUsed: 4 - gameState.remainingFailures,
+            failuresUsed,
+            correctGuesses,
+            scorePercent,
             firstColour: gameState.firstColour,
-            playTimeSeconds: currentPlayTimeSeconds
+            playTimeSeconds: currentPlayTimeSeconds,
+            userId: cumulativeProfile.userId,
+            username: cumulativeProfile.username
         }
         cumulativeData.push(newCumulativeEntry)
     } else {
@@ -359,16 +600,24 @@ function storeGameStateData() {
         if (matchingIndex != -1) {
             cumulativeData[matchingIndex].completed = gameState.isComplete
             cumulativeData[matchingIndex].isWin = gameState.isWin
-            cumulativeData[matchingIndex].failuresUsed = 4 - gameState.remainingFailures
+            cumulativeData[matchingIndex].failuresUsed = failuresUsed
+            cumulativeData[matchingIndex].correctGuesses = correctGuesses
+            cumulativeData[matchingIndex].scorePercent = scorePercent
             cumulativeData[matchingIndex].firstColour = gameState.firstColour
             cumulativeData[matchingIndex].playTimeSeconds = currentPlayTimeSeconds
+            cumulativeData[matchingIndex].userId = cumulativeProfile.userId
+            cumulativeData[matchingIndex].username = cumulativeProfile.username
         }
     }
     storeCumulativeData()
 }
 
 function storeCumulativeData() {
-    localStorage.setItem("pick-4-cumulative-data", JSON.stringify(cumulativeData))
+    ensureCumulativeProfile()
+    localStorage.setItem("pick-4-cumulative-data", JSON.stringify({
+        entries: cumulativeData,
+        profile: cumulativeProfile
+    }))
 }
 
 function pressStatsButton(buttonId) {
@@ -387,6 +636,33 @@ function pressStatsButton(buttonId) {
 
     const pressedOverlay = document.querySelector(`[data-overlay-${buttonId}]`)
     pressedOverlay.classList.add('active')
+
+    if (buttonId !== "rankings") {
+        hideYesNoPopup()
+        hideNamePopup()
+        return
+    }
+
+    if (!cumulativeProfile.hasSetUsername) {
+        hideYesNoPopup()
+        showNamePopup((enteredName) => {
+            const normalizedName = normalizeLeaderboardName(enteredName)
+            if (!isLeaderboardNameValid(normalizedName)) return
+
+            cumulativeProfile.username = normalizedName
+            cumulativeProfile.hasSetUsername = true
+            gameState.username = normalizedName
+
+            storeCumulativeData()
+            storeGameStateData()
+            updateRankingsFromApi()
+        })
+        return
+    }
+
+    hideYesNoPopup()
+    hideNamePopup()
+    updateRankingsFromApi()
 }
 
 function fetchGameState() {
@@ -408,6 +684,10 @@ function fetchGameState() {
 
     gameState.items = normalizeGameStateItems(gameState.items)
 
+    ensureCumulativeProfile()
+    gameState.username = cumulativeProfile.username
+    storeGameStateData()
+
     if (typeof ensurePlayTimeState === "function") ensurePlayTimeState()
 
     if (gameState.hasOpenedPuzzle === true) {
@@ -420,6 +700,8 @@ function fetchGameState() {
 function fetchCumulativeData() {
     if (USE_DUMMY_STATS_DATA) {
         cumulativeData = createDummyCumulativeData();
+        ensureCumulativeProfile()
+        storeCumulativeData()
         console.log("Cumulative Data was set to dummy test data")
         return;
     }
@@ -427,7 +709,25 @@ function fetchCumulativeData() {
     const localStoreJSON = localStorage.getItem("pick-4-cumulative-data")
     if (localStoreJSON != null) {
         console.log("Cumulative Data was Found: " + localStoreJSON)
-        cumulativeData = JSON.parse(localStoreJSON)
+        const parsedStore = JSON.parse(localStoreJSON)
+
+        if (Array.isArray(parsedStore)) {
+            cumulativeData = parsedStore
+            cumulativeProfile = {
+                userId: "",
+                username: "",
+                hasSetUsername: false
+            }
+        } else {
+            cumulativeData = Array.isArray(parsedStore.entries) ? parsedStore.entries : []
+            cumulativeProfile = {
+                userId: typeof parsedStore.profile?.userId === "string" ? parsedStore.profile.userId : "",
+                username: typeof parsedStore.profile?.username === "string" ? parsedStore.profile.username : "",
+                hasSetUsername: Boolean(parsedStore.profile?.hasSetUsername)
+            }
+        }
+
+        ensureCumulativeProfile()
         storeCumulativeData()
     } else {
         console.log("Cumulative Data was reset")
@@ -435,8 +735,18 @@ function fetchCumulativeData() {
     }
 }
 
-function resetCumulativeData() {
+function resetCumulativeData(clearProfile = false) {
     cumulativeData = []
+
+    if (clearProfile) {
+        cumulativeProfile = {
+            userId: "",
+            username: "",
+            hasSetUsername: false
+        }
+    }
+
+    ensureCumulativeProfile()
     storeCumulativeData()
 }
 
@@ -465,12 +775,164 @@ async function updatePerformanceFromApi() {
     if (!performanceMessageElement) return
 
     try {
-        const performanceSummary = await window.fakeRankingsApi.getPerformanceSummary()
+        const leaderboardData = await window.fakeRankingsApi.getLeaderboardData()
+        const allEntries = normalizeLeaderboardEntries(leaderboardData?.entries)
+        const playerName = normalizeLeaderboardName(cumulativeProfile.username) || cumulativeProfile.userId
+        const leaderboardView = buildLeaderboardView(allEntries, playerName, cumulativeProfile.userId)
+        const performanceSummary = leaderboardView.performanceSummary
         if (!performanceSummary) return
 
         performanceMessageElement.innerHTML = "You ranked in the top " + performanceSummary.topPercentToday + "% of players today - <br> well done! Your average rank <br> over the last 30 days has been " + performanceSummary.averageRank30Days + "%."
     } catch (error) {
         console.error("Failed to fetch performance summary", error)
+    }
+}
+
+function normalizeLeaderboardEntries(entries) {
+    if (!Array.isArray(entries)) return []
+
+    return entries
+        .map(entry => {
+            const safeEntry = entry || {}
+            const failuresUsed = Math.max(0, Number(safeEntry.failuresUsed) || 0)
+            const correctGuesses = Math.max(0, Math.min(4, Number(safeEntry.correctGuesses) || 0))
+            const playTimeSeconds = Math.max(0, Number(safeEntry.playTimeSeconds) || 0)
+
+            return {
+                userId: typeof safeEntry.userId === "string" ? safeEntry.userId : "",
+                username: typeof safeEntry.username === "string" ? safeEntry.username : "",
+                gameNumber: Number.isFinite(safeEntry.gameNumber) ? safeEntry.gameNumber : null,
+                completed: Boolean(safeEntry.completed),
+                isWin: Boolean(safeEntry.isWin),
+                failuresUsed,
+                correctGuesses,
+                scorePercent: Number.isFinite(safeEntry.scorePercent)
+                    ? clampScore(safeEntry.scorePercent)
+                    : calculateScorePercent(correctGuesses, failuresUsed, playTimeSeconds),
+                firstColour: typeof safeEntry.firstColour === "string" ? safeEntry.firstColour : null,
+                playTimeSeconds,
+                receivedAtMs: Number.isFinite(safeEntry.receivedAt)
+                    ? safeEntry.receivedAt
+                    : Date.parse(safeEntry.receivedAt || "") || Date.now()
+            }
+        })
+        .filter(entry => entry.gameNumber !== null && entry.completed)
+}
+
+function getLeaderboardIdentity(entry) {
+    if (entry.userId && entry.userId.trim() !== "") return "id:" + entry.userId.trim()
+    return "name:" + (entry.username || "unknown")
+}
+
+function sameUtcDay(leftMs, rightMs) {
+    const left = new Date(leftMs)
+    const right = new Date(rightMs)
+
+    return left.getUTCFullYear() === right.getUTCFullYear()
+        && left.getUTCMonth() === right.getUTCMonth()
+        && left.getUTCDate() === right.getUTCDate()
+}
+
+function buildLeaderboardView(entries, playerName, playerUserId) {
+    const byPlayer = new Map()
+
+    entries.forEach(entry => {
+        const key = getLeaderboardIdentity(entry)
+        if (!byPlayer.has(key)) byPlayer.set(key, [])
+        byPlayer.get(key).push(entry)
+    })
+
+    const playerSummaries = Array.from(byPlayer.entries()).map(([key, plays]) => {
+        plays.sort((a, b) => b.receivedAtMs - a.receivedAtMs)
+        const last20Plays = plays.slice(0, 20)
+        const averageScore = last20Plays.length === 0
+            ? 0
+            : last20Plays.reduce((sum, play) => sum + play.scorePercent, 0) / last20Plays.length
+
+        const averageTime = last20Plays.length === 0
+            ? Number.MAX_SAFE_INTEGER
+            : last20Plays.reduce((sum, play) => sum + play.playTimeSeconds, 0) / last20Plays.length
+
+        const wins = plays.filter(play => play.isWin).length
+        const latestPlay = plays[0]
+
+        return {
+            key,
+            userId: latestPlay.userId,
+            name: latestPlay.username || latestPlay.userId || "Player",
+            averageScore,
+            averageTime,
+            wins,
+            plays,
+            last20ScoresAscending: last20Plays
+                .slice()
+                .reverse()
+                .map(play => play.scorePercent)
+        }
+    })
+
+    playerSummaries.sort((a, b) => {
+        if (b.averageScore !== a.averageScore) return b.averageScore - a.averageScore
+        if (b.wins !== a.wins) return b.wins - a.wins
+        return a.averageTime - b.averageTime
+    })
+
+    const rankedPlayers = playerSummaries.map((summary, index) => ({
+        rank: index + 1,
+        name: summary.name,
+        percent: clampScore(summary.averageScore),
+        userId: summary.userId,
+        key: summary.key,
+        last20ScoresAscending: summary.last20ScoresAscending,
+        plays: summary.plays
+    }))
+
+    const playerKey = playerUserId && playerUserId.trim() !== ""
+        ? "id:" + playerUserId.trim()
+        : "name:" + playerName
+
+    const playerRow = rankedPlayers.find(player => player.key === playerKey)
+        || rankedPlayers.find(player => player.name === playerName)
+        || null
+
+    const totalPlayers = rankedPlayers.length
+    const now = Date.now()
+    const myTodayPlays = playerRow
+        ? playerRow.plays.filter(play => sameUtcDay(play.receivedAtMs, now))
+        : []
+
+    const bestTodayScore = myTodayPlays.length
+        ? Math.max(...myTodayPlays.map(play => play.scorePercent))
+        : (playerRow ? playerRow.percent : 0)
+
+    const topPercentToday = totalPlayers > 0 && playerRow
+        ? Math.max(1, Math.ceil((playerRow.rank / totalPlayers) * 100))
+        : 100
+
+    const averageRank30Days = playerRow && playerRow.last20ScoresAscending.length > 0
+        ? clampScore(playerRow.last20ScoresAscending.reduce((sum, value) => sum + value, 0) / playerRow.last20ScoresAscending.length)
+        : 0
+
+    return {
+        topSix: rankedPlayers.slice(0, 6),
+        currentRank: playerRow
+            ? {
+                rank: playerRow.rank,
+                totalPlayers,
+                percent: playerRow.percent,
+                name: playerRow.name
+            }
+            : {
+                rank: totalPlayers,
+                totalPlayers,
+                percent: 0,
+                name: playerName
+            },
+        playerLast20Plays: playerRow ? playerRow.last20ScoresAscending : [],
+        performanceSummary: {
+            topPercentToday,
+            averageRank30Days: averageRank30Days || bestTodayScore
+        }
     }
 }
 
@@ -518,18 +980,16 @@ async function updateRankingsFromApi() {
     if (rankingRows.length === 0) return
 
     try {
-        const playerName = "Jeff"
-        const [topSix, currentRank, last20Plays] = await Promise.all([
-            window.fakeRankingsApi.getTop6(cumulativeData, playerName),
-            window.fakeRankingsApi.getPlayerCurrentRank(cumulativeData, playerName),
-            window.fakeRankingsApi.getPlayerLast20Plays(cumulativeData, playerName)
-        ])
+        const playerName = normalizeLeaderboardName(cumulativeProfile.username) || cumulativeProfile.userId
+        const leaderboardData = await window.fakeRankingsApi.getLeaderboardData()
+        const allEntries = normalizeLeaderboardEntries(leaderboardData?.entries)
+        const { topSix, currentRank, playerLast20Plays } = buildLeaderboardView(allEntries, playerName, cumulativeProfile.userId)
 
         if (rankMessageElement && currentRank) {
             rankMessageElement.textContent = "You rank #" + currentRank.rank + " out of " + currentRank.totalPlayers + " players"
         }
 
-        renderPercentileGraph(last20Plays)
+        renderPercentileGraph(playerLast20Plays)
 
         rankingRows.forEach((row, index) => {
             const entry = topSix[index]
@@ -552,6 +1012,41 @@ async function updateRankingsFromApi() {
         console.error("Failed to fetch rankings data", error)
     }
 }
+
+async function sendCurrentSessionPlayDataToApi() {
+    if (!window.fakeRankingsApi || typeof window.fakeRankingsApi.sendCurrentGameData !== "function") return
+
+    const currentPlayTimeSeconds = typeof getCurrentPlayTimeSeconds === "function" ? getCurrentPlayTimeSeconds() : 0
+    const currentEntry = cumulativeData.find(entry => entry.gameNumber === gameState.gameNumber)
+    const correctGuesses = Math.max(0, Math.min(4, Number(gameState.submittedCount) || 0))
+    const failuresUsed = Math.max(0, 4 - (Number(gameState.remainingFailures) || 0))
+    const scorePercent = calculateScorePercent(correctGuesses, failuresUsed, currentPlayTimeSeconds)
+
+    const payload = {
+        ...(currentEntry || {}),
+        gameNumber: gameState.gameNumber,
+        completed: gameState.isComplete,
+        isWin: gameState.isWin,
+        failuresUsed,
+        correctGuesses,
+        scorePercent,
+        firstColour: gameState.firstColour,
+        playTimeSeconds: currentPlayTimeSeconds,
+        userId: cumulativeProfile.userId,
+        username: cumulativeProfile.username,
+        hasSetUsername: cumulativeProfile.hasSetUsername
+    }
+
+    try {
+        await window.fakeRankingsApi.sendCurrentGameData(payload)
+    } catch (error) {
+        console.error("Failed to send play data", error)
+    }
+}
+
+document.addEventListener("onCompletion", () => {
+    sendCurrentSessionPlayDataToApi()
+})
 
 function updateAllStats() {
     updatePerformanceFromApi()
@@ -643,6 +1138,22 @@ function pressShare() {
     }
 
     fireEvent("pressedShare");
+}
+
+function clearPuzzleData() {
+    executeWithYesNoPopup(
+        "Are you sure that you wish to clear your Links puzzle data?",
+        () => {
+            gameState.username = ""
+            resetCumulativeData(true)
+            resetGameState()
+            if (typeof resetGameLogic === 'function') resetGameLogic()
+            hideNamePopup()
+            pressStatsButton('performance')
+            showPage('info', 'stats')
+            fireEvent("clearedPuzzleData")
+        }
+    )
 }
 
 function detectTouchscreen() {

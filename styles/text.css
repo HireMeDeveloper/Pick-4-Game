@@ -138,6 +138,125 @@
     position: relative;
 }
 
+.stats-yes-no-popup {
+    position: absolute;
+    left: 50%;
+    top: 12.5em;
+    transform: translateX(-50%);
+    z-index: 30;
+    width: 10.4em;
+    background: #252a30;
+    color: white;
+    border-radius: 0.25em;
+    padding: 0.85em;
+    box-shadow: 0 0.2em 0.7em rgba(0, 0, 0, 0.25);
+}
+
+.stats-yes-no-popup.hidden {
+    display: none;
+}
+
+.stats-yes-no-popup-text {
+    font-size: 0.62em;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.stats-yes-no-popup-actions {
+    margin-top: 0.75em;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45em;
+}
+
+.stats-yes-no-popup-button {
+    border: none;
+    border-radius: 0.18em;
+    font-size: 0.58em;
+    height: 2.2em;
+    cursor: pointer;
+}
+
+.stats-yes-no-popup-button.yes {
+    background: #f2f3f4;
+    color: #111;
+}
+
+.stats-yes-no-popup-button.no {
+    background: var(--lime-accent);
+    color: #111;
+}
+
+.stats-name-popup {
+    position: absolute;
+    left: 50%;
+    top: 12.5em;
+    transform: translateX(-50%);
+    z-index: 31;
+    width: 10.4em;
+    background: #252a30;
+    color: white;
+    border-radius: 0.25em;
+    padding: 0.85em;
+    box-shadow: 0 0.2em 0.7em rgba(0, 0, 0, 0.25);
+}
+
+.stats-name-popup.hidden {
+    display: none;
+}
+
+.stats-name-popup-title {
+    font-size: 0.62em;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.stats-name-popup-input {
+    width: 100%;
+    margin-top: 0.7em;
+    height: 2.25em;
+    border-radius: 0.22em;
+    border: solid 0.08em #4f5861;
+    background: #252a30;
+    color: #f2f3f4;
+    font-size: 0.58em;
+    text-align: center;
+    outline: none;
+}
+
+.stats-name-popup-input::placeholder {
+    color: #8f959d;
+}
+
+.stats-name-popup-submit {
+    width: 100%;
+    margin-top: 0.58em;
+    height: 2.2em;
+    border: none;
+    border-radius: 0.18em;
+    font-size: 0.58em;
+    background: #8f959d;
+    color: #4f5358;
+    cursor: default;
+}
+
+.stats-name-popup-submit.enabled {
+    background: #f2f3f4;
+    color: #111;
+    cursor: pointer;
+}
+
+.clear-puzzle-data-button {
+    border: none;
+    background: none;
+    color: black;
+    font-size: 0.45em;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    line-height: 1;
+}
+
 .hr-stats {
     width: 17em;
     border: solid black 0.01em;

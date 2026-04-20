@@ -204,6 +204,34 @@
                     </button>
                 </div>
             </div>
+            <div class="stats-yes-no-popup hidden" data-yes-no-popup>
+                <div class="stats-yes-no-popup-text" data-yes-no-popup-text>
+                    Do you want to add your name to the leaderboard?
+                </div>
+                <div class="stats-yes-no-popup-actions">
+                    <button class="stats-yes-no-popup-button yes" data-yes-no-popup-yes>
+                        Yes
+                    </button>
+                    <button class="stats-yes-no-popup-button no" data-yes-no-popup-no>
+                        No
+                    </button>
+                </div>
+            </div>
+            <div class="stats-name-popup hidden" data-name-popup>
+                <div class="stats-name-popup-title">
+                    Enter your name
+                </div>
+                <input
+                    class="stats-name-popup-input"
+                    type="text"
+                    maxlength="15"
+                    placeholder="Name"
+                    data-name-popup-input
+                >
+                <button class="stats-name-popup-submit" data-name-popup-submit disabled>
+                    Submit
+                </button>
+            </div>
             <div class="overlay active" data-stats-overlay data-overlay-performance>
                 <div class="centered">
                     <div class="text-box-info gap centered" style="--amount: 3em" data-performance-message>
@@ -249,6 +277,11 @@
                         <img src="resources/share-icon.svg" class="share-icon">
                         <div>Share</div>
                         <div></div>
+                    </button>
+                </div>
+                <div class="centered gap" style="--amount: 0.25em">
+                    <button class="clear-puzzle-data-button" onclick="clearPuzzleData()">
+                        Clear my puzzle data
                     </button>
                 </div>
             </div>
@@ -326,6 +359,11 @@
                         <img src="resources/share-icon.svg" class="share-icon">
                         <div>Share</div>
                         <div></div>
+                    </button>
+                </div>
+                <div class="centered gap" style="--amount: 0.25em">
+                    <button class="clear-puzzle-data-button" onclick="clearPuzzleData()">
+                        Clear my puzzle data
                     </button>
                 </div>
             </div>

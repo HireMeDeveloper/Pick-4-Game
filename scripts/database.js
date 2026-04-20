@@ -17,6 +17,8 @@ const PLAYER_GAME_ENTRIES_JSON_REFERENCE = `[
         "completed": true,
         "isWin": true,
         "failuresUsed": 1,
+        "correctGuesses": 4,
+        "scorePercent": 85,
         "firstColour": "orange",
         "playTimeSeconds": 102,
         "receivedAt": "2026-03-16T18:01:04Z"
@@ -34,12 +36,12 @@ usr_1005 | Liam       | 2026-02-02T19:27:41Z | 4
 `.trim()
 
 const PLAYER_GAME_ENTRIES_TABLE_REFERENCE = `
-entryId   | userId   | gameNumber | completed | isWin | failuresUsed | firstColour | playTimeSeconds | receivedAt
-pge_90001 | usr_1001 | 429        | true      | true  | 1            | orange      | 102             | 2026-03-16T18:01:04Z
-pge_90002 | usr_1001 | 430        | true      | false | 4            | green       | 148             | 2026-03-17T18:03:11Z
-pge_90003 | usr_1001 | 431        | true      | true  | 2            | lilac       | 114             | 2026-03-18T18:00:04Z
-pge_90004 | usr_1002 | 431        | true      | true  | 0            | orange      | 63              | 2026-03-18T17:58:00Z
-pge_90005 | usr_1003 | 431        | true      | true  | 1            | lime        | 77              | 2026-03-18T17:58:44Z
+entryId   | userId   | gameNumber | completed | isWin | failuresUsed | correctGuesses | scorePercent | firstColour | playTimeSeconds | receivedAt
+pge_90001 | usr_1001 | 429        | true      | true  | 1            | 4              | 85           | orange      | 102             | 2026-03-16T18:01:04Z
+pge_90002 | usr_1001 | 430        | true      | false | 4            | 0              | 0            | green       | 148             | 2026-03-17T18:03:11Z
+pge_90003 | usr_1001 | 431        | true      | true  | 2            | 4              | 63           | lilac       | 114             | 2026-03-18T18:00:04Z
+pge_90004 | usr_1002 | 431        | true      | true  | 0            | 4              | 94           | orange      | 63              | 2026-03-18T17:58:00Z
+pge_90005 | usr_1003 | 431        | true      | true  | 1            | 4              | 87           | lime        | 77              | 2026-03-18T17:58:44Z
 `.trim()
 
 // Reference-only SQL queries for data needed by scripts/api.js.
@@ -163,6 +165,8 @@ INSERT INTO player_game_entries (
     completed,
     is_win,
     failures_used,
+    correct_guesses,
+    score_percent,
     first_colour,
     play_time_seconds,
     received_at
@@ -173,6 +177,8 @@ INSERT INTO player_game_entries (
     :completed,
     :is_win,
     :failures_used,
+    :correct_guesses,
+    :score_percent,
     :first_colour,
     :play_time_seconds,
     NOW()
